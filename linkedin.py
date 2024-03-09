@@ -8,17 +8,18 @@ import time
 from bs4 import BeautifulSoup
 async def openBrowser():
     options = Options()
-    options.add_argument("--headless")
+    #options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-extensions")
     options.add_argument("--disable-software-rasterizer")
     driver = webdriver.Chrome(options=options)
-    driver.set_window_size(1920, 1080)
+    # driver.set_window_size(1920, 1080)
+    driver.maximize_window()
     return driver
     
-def openBrowserUserCookies(cookies, driver):
+def openBrowserUserCookies(cookies):
     options = Options()
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -38,6 +39,8 @@ async def LinekdinLogin(email, password, driver):
     driver.find_element(By.XPATH, "*//input[@id = 'password']").send_keys(password)
     driver.find_element(By.XPATH, "*//button[@aria-label= 'Sign in']").click()
     
+    return True
+    
 
 async def getverificationCodeStatus(driver):
     codeFlag = False
@@ -54,7 +57,7 @@ async def verifyCode(code, driver):
     driver.find_element(By.XPATH, "*//input[@placeholder = 'Enter code']").send_keys(code)
     driver.find_element(By.XPATH, "//button[normalize-space()='Submit']").click()
     return True
-async def getCookies():
+async def getCookies(driver):
     cookies = driver.get_cookies()
     return cookies
 

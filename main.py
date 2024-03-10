@@ -8,8 +8,8 @@ from linkedin import openBrowser, openBrowserUserCookies, LinekdinLogin, getveri
 app = FastAPI()
 
 origins = [
-    "https://backend.sddoc.in",
-    "https://backend.sddoc.in/",
+    "https://leads.sddoc.in",
+    "https://leads.sddoc.in/",
     "http://localhost:3000",
     "http://localhost:3000/",
 ]
@@ -69,7 +69,7 @@ async def verifcode(code: str = Query(...), session_id: str = Query(...), driver
         return JSONResponse(content={"message": "Code Not Verified!"})
 
 @app.get("/search")
-async def search(serachname: str = Query(...), titlekeyword: str = Query(...), location: str = Query(...), connectiontype: List[str] = Query(...), company: str = Query(...), driver = Depends(get_session_driver)):
+async def search(serachname: str = Query(...), titlekeyword: str = Query(...), location: str = Query(...), connectiontype: List[str] = Query(...), company: str = Query(...), session_id: str = Query(...),driver = Depends(get_session_driver)):
     await doSearch(serachname, titlekeyword, location, connectiontype, company,driver)
     return JSONResponse(content={"message": "Search Successful!"})
 
@@ -82,10 +82,20 @@ async def pageDataConnection(session_id: str = Query(...), driver = Depends(get_
     data = await getPageDataConnection(driver)
     return JSONResponse(content=data)
 
+@app.get("/nextpage")
+async def nextpage(session_id: str = Query(...), driver = Depends(get_session_driver)):
+    await getNextPage(driver)
+    return JSONResponse(content={"message": "Next Page Clicked!"})
+
+@app.get("/close")
+async def closeBrowser(session_id: str = Query(...), driver = Depends(get_session_driver)):
+    driver.quit()
+    del driver_pool[session_id]
+    return JSONResponse(content={"message": "Browser Closed!"})
 
 @app.get("/connect")
-async def sendConnection(session_id: str = Query(...), driver = Depends(get_session_driver)):
-    await sendConnectionRequest()
+async def sendConnection(url : str = Query(...), message : str = Query(...) ,session_id: str = Query(...), driver = Depends(get_session_driver)):
+    await sendConnectionRequest(url, message, driver)
     return JSONResponse(content={"message": "Connection Request Sent!"})
 
 

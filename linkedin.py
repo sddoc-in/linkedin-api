@@ -98,20 +98,38 @@ async def getTotalPage(driver):
     totalPage = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//div[@class = 'artdeco-pagination__page-state']"))).text
     return int(totalPage.split('of')[1].strip())
 
+# async def getPageDataConnection(driver):
+#     dataList = []
+#     findResultList = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, "*//li[@class='reusable-search__result-container']")))
+#     for result in findResultList:
+#         # Name =  result.find_element(By.XPATH, ".//div[@class='t-roman t-sans']//div/span/span/a/span/span").text.strip()
+#         Name =  WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, ".//div[@class='t-roman t-sans']//div/span/span/a/span/span"))).text
+#         # profileLink = result.find_element(By.XPATH, ".//div[@class='t-roman t-sans']/div/span/span/a").get_attribute('href')
+#         profileLink  =  WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, ".//div[@class='t-roman t-sans']//div/span/span/a"))).get_attribute('href')
+#         # UserTitle = result.find_element(By.XPATH, ".//div[@class='entity-result__primary-subtitle t-14 t-black t-normal']").text.strip()
+#         UserTitle = WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, ".//div[@class='entity-result__primary-subtitle t-14 t-black t-normal']"))).text
+#         # address = result.find_element(By.XPATH, ".//div[@class='entity-result__secondary-subtitle t-14 t-normal']").text.strip()
+#         address = WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, ".//div[@class='entity-result__secondary-subtitle t-14 t-normal']"))).text
+#         dataList.append({'Name': Name, 'profileLink': profileLink, 'UserTitle': UserTitle, 'adress': address})
+#     return dataList
+
 async def getPageDataConnection(driver):
     dataList = []
     findResultList = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, "*//li[@class='reusable-search__result-container']")))
     for result in findResultList:
         result_html = result.get_attribute('outerHTML')
         soup = BeautifulSoup(result_html, 'html.parser')
-        Name = soup.find('div', {'class': 't-roman t-sans'}).find('a').find('span').find('span').text
-        profileLink = soup.find('div', {'class': 't-roman t-sans'}).find('a')['href']
-        UserTitle = soup.find('div', {'class': 'entity-result__primary-subtitle t-14 t-black t-normal'}).text.strip()
-        adress = soup.find('div', {'class': 'entity-result__secondary-subtitle t-14 t-normal'}).text.strip()
-        # WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Connect']"))).click()
-        # print(Name, profileLink, UserTitle, adress)
-        dataList.append({'Name': Name, 'profileLink': profileLink, 'UserTitle': UserTitle, 'adress': adress})
+       
+        try:
+            Name = soup.find('div', {'class': 't-roman t-sans'}).find('a').find('span').find('span').text
+            profileLink = soup.find('div', {'class': 't-roman t-sans'}).find('a')['href']
+            UserTitle = soup.find('div', {'class': 'entity-result__primary-subtitle t-14 t-black t-normal'}).text.strip()
+            adress = soup.find('div', {'class': 'entity-result__secondary-subtitle t-14 t-normal'}).text.strip()
+            dataList.append({'Name': Name, 'profileLink': profileLink, 'UserTitle': UserTitle, 'adress': adress})
+        except:
+            continue
     return dataList
+
 async def getNextPage(driver):
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[@aria-label='Next']"))).click()
 

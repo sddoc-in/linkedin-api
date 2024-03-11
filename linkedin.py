@@ -14,6 +14,12 @@ async def openBrowser():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-extensions")
     options.add_argument("--disable-software-rasterizer")
+    # Set user agent to simulate a specific browser
+    options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3')
+
+    # Enable automation features to make the browser look more like a real user
+    options.add_experimental_option('excludeSwitches', ['enable-automation'])
+    options.add_experimental_option('useAutomationExtension', False)
     driver = webdriver.Chrome(options=options)
     driver.set_window_size(1920, 1080)
     # driver.maximize_window()

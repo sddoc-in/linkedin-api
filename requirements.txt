@@ -1,4 +1,5 @@
 fastapi
+chromedriver
 uvicorn
 bs4
 beautifulsoup4

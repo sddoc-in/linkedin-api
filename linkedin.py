@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time    
+import time , random    
 from bs4 import BeautifulSoup
 async def openBrowser():
     options = Options()
@@ -22,8 +22,11 @@ async def openBrowser():
     # driver.set_window_size(1920, 1080)
     driver.maximize_window()
     return driver
+ 
+async def getrandomNumber(min, max):
+    return random.randint(min, max)
     
-def openBrowserUserCookies(cookies):
+async def openBrowserUserCookies(cookies):
     options = Options()
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
@@ -41,6 +44,7 @@ def openBrowserUserCookies(cookies):
 async def LinekdinLogin(email, password, driver):
     driver.get("https://www.linkedin.com/login")
     driver.find_element(By.XPATH, "*//input[@id = 'username']").send_keys(email)
+    time.sleep(await getrandomNumber(2,6))
     driver.find_element(By.XPATH, "*//input[@id = 'password']").send_keys(password)
     driver.find_element(By.XPATH, "*//button[@aria-label= 'Sign in']").click()
     
@@ -60,6 +64,7 @@ async def getverificationCodeStatus(driver):
 
 async def verifyCode(code, driver):
     driver.find_element(By.XPATH, "*//input[@placeholder = 'Enter code']").send_keys(code)
+    time.sleep(await getrandomNumber(2,5))
     driver.find_element(By.XPATH, "//button[normalize-space()='Submit']").click()
     return True
 async def getCookies(driver):
@@ -73,11 +78,14 @@ async def doSearch(serachName, titleKeyword, location, connectionType, company, 
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder='Search']"))).send_keys(serachName)
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder='Search']"))).send_keys(Keys.ENTER)
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(*//button[normalize-space()='People'])[1]"))).click()
+        time.sleep(await getrandomNumber(1,3))
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='All filters']"))).click()
         # driver.find_element(By.XPATH, "*//button[normalize-space()='All filters']").click()
+        time.sleep(await getrandomNumber(1,3))
         if connectionType:
             for i in connectionType:
                 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f"*//label[@for = 'advanced-filter-network-{i}']"))).click()
+                time.sleep(await getrandomNumber(1,3))
                 # driver.find_element(By.XPATH, f"*//label[@for = 'advanced-filter-network-{i}']").click()
         
         if location:
@@ -85,7 +93,7 @@ async def doSearch(serachName, titleKeyword, location, connectionType, company, 
             # driver.find_element(By.XPATH, "*//button[normalize-space()='Add a location']").click()
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder = 'Add a location']"))).send_keys(location)
             # driver.find_element(By.XPATH, "*//input[@placeholder = 'Add a location']").send_keys(location)
-            time.sleep(2)
+            time.sleep(await getrandomNumber(2,3))
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder = 'Add a location']"))).send_keys(Keys.ARROW_DOWN)
             # driver.find_element(By.XPATH, "*//input[@placeholder = 'Add a location']").send_keys(Keys.ARROW_DOWN)
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder = 'Add a location']"))).send_keys(Keys.ENTER)
@@ -93,9 +101,11 @@ async def doSearch(serachName, titleKeyword, location, connectionType, company, 
         if titleKeyword:
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//label[normalize-space()= 'Title']/input"))).send_keys(titleKeyword)
             # driver.find_element(By.XPATH, "*//label[normalize-space()= 'Title']/input").send_keys(titleKeyword)
+            time.sleep(await getrandomNumber(1,3))
         if company:
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//label[normalize-space()= 'Company']/input"))).send_keys(company)
             # driver.find_element(By.XPATH, "*//label[normalize-space()= 'Company']/input").send_keys(company)
+            time.sleep(await getrandomNumber(1,3))
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(*//button[normalize-space()='Show results'])[1]"))).click()
         return True
     # driver.find_element(By.XPATH, "(*//button[normalize-space()='Show results'])[1]").click()
@@ -148,12 +158,16 @@ async def sendConnectionRequest(link, message, driver):
     try:
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//div[@class='ph5 pb5']//button[normalize-space()='Connect']"))).click()
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Add a note']"))).click()
+        time.sleep(await getrandomNumber(1,3))
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']"))).send_keys(message)
+        time.sleep(await getrandomNumber(2,6))
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
     except:
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(*//button[normalize-space()='More'])[2]"))).click()
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(//div[starts-with(@aria-label, 'Invite')])[2]"))).click()
+        time.sleep(await getrandomNumber(1,3))
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Add a note']"))).click()
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']"))).send_keys(message)
+        time.sleep(await getrandomNumber(2,6))
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
             

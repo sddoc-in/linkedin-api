@@ -70,8 +70,11 @@ async def verifcode(code: str = Query(...), session_id: str = Query(...), driver
 
 @app.get("/search")
 async def search(serachname: str = Query(...), titlekeyword: str = Query(...), location: str = Query(...), connectiontype: List[str] = Query(...), company: str = Query(...), session_id: str = Query(...),driver = Depends(get_session_driver)):
-    await doSearch(serachname, titlekeyword, location, connectiontype, company,driver)
-    return JSONResponse(content={"message": "Search Successful!"})
+    isSuccess = await doSearch(serachname, titlekeyword, location, connectiontype, company,driver)
+    if isSuccess:
+        return JSONResponse(content={"message": "Search Successful!"})
+    else:
+        return JSONResponse(content={"message": "Search Unsuccessful retry again!"})
 
 @app.get("/totalpage")
 async def totalPage(session_id: str = Query(...), driver = Depends(get_session_driver)):

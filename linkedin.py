@@ -8,7 +8,7 @@ import time
 from bs4 import BeautifulSoup
 async def openBrowser():
     options = Options()
-    options.add_argument("--headless")
+    #options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -17,9 +17,10 @@ async def openBrowser():
     # Enable automation features to make the browser look more like a real user
     options.add_experimental_option('excludeSwitches', ['enable-automation'])
     options.add_experimental_option('useAutomationExtension', False)
+    options.add_argument("--disable-blink-features=AutomationControlled")
     driver = webdriver.Chrome(options=options)
-    driver.set_window_size(1920, 1080)
-    #driver.maximize_window()
+    # driver.set_window_size(1920, 1080)
+    driver.maximize_window()
     return driver
     
 def openBrowserUserCookies(cookies):
@@ -67,40 +68,44 @@ async def getCookies(driver):
 
 
 async def doSearch(serachName, titleKeyword, location, connectionType, company, driver):
-    driver.get("https://www.linkedin.com/feed/")
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder='Search']"))).send_keys(serachName)
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder='Search']"))).send_keys(Keys.ENTER)
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(*//button[normalize-space()='People'])[1]"))).click()
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='All filters']"))).click()
-    # driver.find_element(By.XPATH, "*//button[normalize-space()='All filters']").click()
-    if connectionType:
-        for i in connectionType:
-            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f"*//label[@for = 'advanced-filter-network-{i}']"))).click()
-            # driver.find_element(By.XPATH, f"*//label[@for = 'advanced-filter-network-{i}']").click()
-    
-    if location:
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Add a location']"))).click()
-        # driver.find_element(By.XPATH, "*//button[normalize-space()='Add a location']").click()
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder = 'Add a location']"))).send_keys(location)
-        # driver.find_element(By.XPATH, "*//input[@placeholder = 'Add a location']").send_keys(location)
-        time.sleep(2)
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder = 'Add a location']"))).send_keys(Keys.ARROW_DOWN)
-        # driver.find_element(By.XPATH, "*//input[@placeholder = 'Add a location']").send_keys(Keys.ARROW_DOWN)
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder = 'Add a location']"))).send_keys(Keys.ENTER)
-        # driver.find_element(By.XPATH, "*//input[@placeholder = 'Add a location']").send_keys(Keys.ENTER)
-    if titleKeyword:
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//label[normalize-space()= 'Title']/input"))).send_keys(titleKeyword)
-        # driver.find_element(By.XPATH, "*//label[normalize-space()= 'Title']/input").send_keys(titleKeyword)
-    if company:
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//label[normalize-space()= 'Company']/input"))).send_keys(company)
-        # driver.find_element(By.XPATH, "*//label[normalize-space()= 'Company']/input").send_keys(company)
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(*//button[normalize-space()='Show results'])[1]"))).click()
+    try:
+        driver.get("https://www.linkedin.com/feed/")
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder='Search']"))).send_keys(serachName)
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder='Search']"))).send_keys(Keys.ENTER)
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(*//button[normalize-space()='People'])[1]"))).click()
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='All filters']"))).click()
+        # driver.find_element(By.XPATH, "*//button[normalize-space()='All filters']").click()
+        if connectionType:
+            for i in connectionType:
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f"*//label[@for = 'advanced-filter-network-{i}']"))).click()
+                # driver.find_element(By.XPATH, f"*//label[@for = 'advanced-filter-network-{i}']").click()
+        
+        if location:
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Add a location']"))).click()
+            # driver.find_element(By.XPATH, "*//button[normalize-space()='Add a location']").click()
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder = 'Add a location']"))).send_keys(location)
+            # driver.find_element(By.XPATH, "*//input[@placeholder = 'Add a location']").send_keys(location)
+            time.sleep(2)
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder = 'Add a location']"))).send_keys(Keys.ARROW_DOWN)
+            # driver.find_element(By.XPATH, "*//input[@placeholder = 'Add a location']").send_keys(Keys.ARROW_DOWN)
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//input[@placeholder = 'Add a location']"))).send_keys(Keys.ENTER)
+            # driver.find_element(By.XPATH, "*//input[@placeholder = 'Add a location']").send_keys(Keys.ENTER)
+        if titleKeyword:
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//label[normalize-space()= 'Title']/input"))).send_keys(titleKeyword)
+            # driver.find_element(By.XPATH, "*//label[normalize-space()= 'Title']/input").send_keys(titleKeyword)
+        if company:
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//label[normalize-space()= 'Company']/input"))).send_keys(company)
+            # driver.find_element(By.XPATH, "*//label[normalize-space()= 'Company']/input").send_keys(company)
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(*//button[normalize-space()='Show results'])[1]"))).click()
+        return True
     # driver.find_element(By.XPATH, "(*//button[normalize-space()='Show results'])[1]").click()
+    except :
+        return False
 
 
 async def getTotalPage(driver):
-    totalPage = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//div[@class = 'artdeco-pagination__page-state']"))).text
-    return int(totalPage.split('of')[1].strip())
+    totalPage = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'results')]"))).text
+    return totalPage
 
 # async def getPageDataConnection(driver):
 #     dataList = []

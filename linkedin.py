@@ -1,4 +1,5 @@
-from seleniumwire import webdriver
+# from seleniumwire import webdriver
+from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -55,7 +56,7 @@ async def openBrowser():
     options.add_argument("--disable-blink-features=AutomationControlled")
     driver = webdriver.Chrome(options=options)
     driver.set_window_size(1920, 1080)
-    driver = webdriver.Chrome(seleniumwire_options=proxy,options=options)
+    driver = webdriver.Chrome(options=options)
     driver.set_window_size(1920, 1080)
     return driver
  

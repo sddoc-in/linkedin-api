@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, Query, HTTPException
+from fastapi import Depends, FastAPI, Query, HTTPException, Body
 from typing import List, Dict, Any
 import uuid
 from fastapi.responses import HTMLResponse  
@@ -66,10 +66,10 @@ async def get_session_driver(session_id: str = Query(...)):
 async def get_authenticated_driver(proxy_address: str = Query(...),
     proxy_port: str = Query(...),
     proxy_username: str = Query(...),
-    proxy_password: str = Query(...),cookiedata: dict = Query(...), session_id: str =Query(default_factory=lambda: str(uuid.uuid4()))):
+    proxy_password: str = Query(...),cookiedata: dict= Body(...), session_id: str =Query(default_factory=lambda: str(uuid.uuid4()))):
     if session_id not in driver_pool:
         # If the session ID is not in the pool, create a new driver
-        driver_pool[session_id] = await openBrowserUserCookies(cookiedata, proxy_address, proxy_port, proxy_username, proxy_password )  # Use Chrome
+        driver_pool[session_id] = await openBrowserUserCookies(cookiedata['cookies'], proxy_address, proxy_port, proxy_username, proxy_password )  # Use Chrome
     return driver_pool[session_id], session_id
 
 @app.get("/openexisting")

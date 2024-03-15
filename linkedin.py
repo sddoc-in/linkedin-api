@@ -82,8 +82,10 @@ async def openBrowserUserCookies(cookies, proxy_address, proxy_port, proxy_usern
     options.add_argument("--disable-blink-features=AutomationControlled")
     
     driver = webdriver.Chrome(seleniumwire_options=proxy,options=options)
+    driver.get("https://www.linkedin.com")
     for cookie in cookies:
         driver.add_cookie(cookie)
+    driver.get("https://www.linkedin.com")
     driver.set_window_size(1920, 1080)
     
     return driver

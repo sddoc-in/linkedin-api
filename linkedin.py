@@ -1,5 +1,5 @@
-# from seleniumwire import webdriver
-from selenium import webdriver
+from seleniumwire import webdriver
+# from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -9,42 +9,16 @@ import time , random
 from bs4 import BeautifulSoup
 
 
-# async def openBrowser(proxy_address, proxy_port, proxy_username, proxy_password ):
-#     options = Options()
-#     proxy = {
-#         'proxy': {
-#             'https': f'https://{proxy_username}:{proxy_password}@{proxy_address}:{proxy_port}',
-#         }
-#     }
-#     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-#     # options.add_argument("--headless")
-#     options.add_argument(f'user-agent={user_agent}')
-#     # options.add_argument("--disable-gpu")
-#     options.add_argument("--no-sandbox")
-#     options.add_argument("--disable-dev-shm-usage")
-#     options.add_argument("--disable-extensions")
-#     options.add_argument("--disable-software-rasterizer")
-#     # Enable automation features to make the browser look more like a real user
-#     options.add_experimental_option('excludeSwitches', ['enable-automation'])
-#     options.add_experimental_option('useAutomationExtension', False)
-#     options.add_argument("--disable-blink-features=AutomationControlled")
-#     if proxy_address == "not":
-#         driver = webdriver.Chrome(options=options)
-#         driver.get('https://www.whatismypublicip.com/')
-#         driver.set_window_size(1920, 1080)
-#     else:
-#         driver = webdriver.Chrome(seleniumwire_options=proxy,options=options)
-#         driver.get('https://www.whatismypublicip.com/')
-#         driver.set_window_size(1920, 1080)
-#     return driver
-
-
-async def openBrowser():
+async def openBrowser(proxy_address, proxy_port, proxy_username, proxy_password ):
     options = Options()
-    
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    proxy = {
+        'proxy': {
+            'https': f'https://{proxy_username}:{proxy_password}@{proxy_address}:{proxy_port}',
+        }
+    }
+    # user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
     # options.add_argument("--headless")
-    options.add_argument(f'user-agent={user_agent}')
+    # options.add_argument(f'user-agent={user_agent}')
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -54,26 +28,50 @@ async def openBrowser():
     options.add_experimental_option('excludeSwitches', ['enable-automation'])
     options.add_experimental_option('useAutomationExtension', False)
     options.add_argument("--disable-blink-features=AutomationControlled")
-    driver = webdriver.Chrome(options=options)
-    driver.set_window_size(1920, 1080)
-    driver = webdriver.Chrome(options=options)
-    driver.set_window_size(1920, 1080)
+    if proxy_address == "not":
+        driver = webdriver.Chrome(options=options)
+        # driver.get('https://www.whatismypublicip.com/')
+        driver.set_window_size(1920, 1080)
+    else:
+        driver = webdriver.Chrome(seleniumwire_options=proxy,options=options)
+        # driver.get('https://www.whatismypublicip.com/')
+        driver.set_window_size(1920, 1080)
     return driver
+
+
+# async def openBrowser():
+#     options = Options()
+    
+#     # user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+#     # options.add_argument("--headless")
+#     # options.add_argument(f'user-agent={user_agent}')
+#     options.add_argument("--disable-gpu")
+#     options.add_argument("--no-sandbox")
+#     options.add_argument("--disable-dev-shm-usage")
+#     options.add_argument("--disable-extensions")
+#     options.add_argument("--disable-software-rasterizer")
+#     # Enable automation features to make the browser look more like a real user
+#     options.add_experimental_option('excludeSwitches', ['enable-automation'])
+#     options.add_experimental_option('useAutomationExtension', False)
+#     options.add_argument("--disable-blink-features=AutomationControlled")
+#     driver = webdriver.Chrome(options=options)
+#     driver.set_window_size(1920, 1080)
+#     return driver
  
 async def getrandomNumber(min, max):
     return random.randint(min, max)
     
-async def openBrowserUserCookies(cookies ):
+async def openBrowserUserCookies(cookies, proxy_address, proxy_port, proxy_username, proxy_password):
     options = Options()
-    # proxy = {
-    #     'proxy': {
-    #         'https': f'https://{proxy_username}:{proxy_password}@{proxy_address}:{proxy_port}',
-    #     }
-    # }
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-    options.add_argument("--headless")
-    options.add_argument(f'user-agent={user_agent}')
-    # options.add_argument("--disable-gpu")
+    proxy = {
+        'proxy': {
+            'https': f'https://{proxy_username}:{proxy_password}@{proxy_address}:{proxy_port}',
+        }
+    }
+    # user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    # options.add_argument("--headless")
+    # options.add_argument(f'user-agent={user_agent}')
+    options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-extensions")
@@ -83,13 +81,15 @@ async def openBrowserUserCookies(cookies ):
     options.add_experimental_option('useAutomationExtension', False)
     options.add_argument("--disable-blink-features=AutomationControlled")
     
-    driver = webdriver.Chrome(options=options)
+    driver = webdriver.Chrome(seleniumwire_options=proxy,options=options)
     for cookie in cookies:
         driver.add_cookie(cookie)
     driver.set_window_size(1920, 1080)
-    driver.get("https://www.linkedin.com")
-    return driver
     
+    return driver
+async def openExistingUser(driver):
+    driver.get("https://www.linkedin.com")
+
 async def LinekdinLogin(email, password, driver):
     driver.get("https://www.linkedin.com/login")
     driver.find_element(By.XPATH, "*//input[@id = 'username']").send_keys(email)
@@ -181,7 +181,7 @@ async def getTotalPage(driver):
 #         dataList.append({'Name': Name, 'profileLink': profileLink, 'UserTitle': UserTitle, 'adress': address})
 #     return dataList
 
-async def getPageDataConnection(driver, url, resultnum):
+async def getPageDataConnection(driver, url, resultnum, message):
     dataList = []
     driver.get(url)
     for i in range(1, int(resultnum)):
@@ -195,17 +195,26 @@ async def getPageDataConnection(driver, url, resultnum):
                 profileLink = soup.find('div', {'class': 't-roman t-sans'}).find('a')['href']
                 UserTitle = soup.find('div', {'class': 'entity-result__primary-subtitle t-14 t-black t-normal'}).text.strip()
                 adress = soup.find('div', {'class': 'entity-result__secondary-subtitle t-14 t-normal'}).text.strip()
-                dataList.append({'Name': Name, 'profileLink': profileLink, 'UserTitle': UserTitle, 'adress': adress})
+                message= message.replace("{{name}}", Name)
+                # isconnected = await sendConnectionRequest(profileLink, message, driver)
+                # dataList.append({'Name': Name, 'profileLink': profileLink, 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected})
+                dataList.append({'Name': Name, 'profileLink': profileLink, 'UserTitle': UserTitle, 'adress': adress })
             except:
                 continue
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[@aria-label='Next']"))).click()
+    dataList = await sendRequest(dataList, driver)
     return dataList
 
 # async def getNextPage(driver):
 #     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[@aria-label='Next']"))).click()
-
-
+async def sendRequest(dataList, driver):
+    for data in dataList:
+        isconnect = await sendConnectionRequest(data['profileLink'], data['message'], driver)
+        data['isconnected'] = isconnect
+    return dataList
 async def sendConnectionRequest(link, message, driver):
+    original_window = driver.window_handles[0]
+    driver.switch_to.new_window('tab')
     driver.get(link)
     try:
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//div[@class='ph5 pb5']//button[normalize-space()='Connect']"))).click()
@@ -214,12 +223,22 @@ async def sendConnectionRequest(link, message, driver):
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']"))).send_keys(message)
         time.sleep(await getrandomNumber(2,6))
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
+        driver.close()
+        driver.switch_to.window(original_window)
+        return {"message": "Connection Request Sent!"}
     except:
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(*//button[normalize-space()='More'])[2]"))).click()
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(//div[starts-with(@aria-label, 'Invite')])[2]"))).click()
-        time.sleep(await getrandomNumber(1,3))
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Add a note']"))).click()
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']"))).send_keys(message)
-        time.sleep(await getrandomNumber(2,6))
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
-            
+        try:
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(*//button[normalize-space()='More'])[2]"))).click()
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(//div[starts-with(@aria-label, 'Invite')])[2]"))).click()
+            time.sleep(await getrandomNumber(1,3))
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Add a note']"))).click()
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']"))).send_keys(message)
+            time.sleep(await getrandomNumber(2,6))
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
+            driver.close()
+            driver.switch_to.window(original_window)
+            return {"message": "Connection Request Sent!"}
+        except :
+            driver.close()
+            driver.switch_to.window(original_window)
+            return {"message": "existing connection!"}

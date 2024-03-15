@@ -4,7 +4,7 @@ import uuid
 from fastapi.responses import HTMLResponse  
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from linkedin import openBrowser, openBrowserUserCookies, LinekdinLogin, getverificationCodeStatus, verifyCode, getCookies, getTotalPage, getPageDataConnection, sendConnectionRequest
+from linkedin import openBrowser, openBrowserUserCookies, LinekdinLogin, getverificationCodeStatus, verifyCode, getCookies, getTotalPage, getPageDataConnection, sendConnectionRequest, 
 app = FastAPI()
 
 origins = [
@@ -38,46 +38,52 @@ proxies = [
     ("45.94.47.66", 8110, "tszuwnnm", "g0q5bywh7j1l")
 ]
 
-async def get_driver(session_id: str =Query(default_factory=lambda: str(uuid.uuid4()))):
-    if session_id not in driver_pool:
-        driver_pool[session_id] = await openBrowser()  
-
-    # Return the existing or newly created driver for the session ID
-    return driver_pool[session_id] , session_id
-
-# async def get_driver(proxy_address: str = Query(...),
-#     proxy_port: str = Query(...),
-#     proxy_username: str = Query(...),
-#     proxy_password: str = Query(...), session_id: str =Query(default_factory=lambda: str(uuid.uuid4()))):
-#     print(proxy_address, proxy_port, proxy_username, proxy_password , "hey")
+# async def get_driver(session_id: str =Query(default_factory=lambda: str(uuid.uuid4()))):
 #     if session_id not in driver_pool:
-#         driver_pool[session_id] = await openBrowser(proxy_address, proxy_port, proxy_username, proxy_password)  
+#         driver_pool[session_id] = await openBrowser()  
 
 #     # Return the existing or newly created driver for the session ID
 #     return driver_pool[session_id] , session_id
 
+async def get_driver(proxy_address: str = Query(...),
+    proxy_port: str = Query(...),
+    proxy_username: str = Query(...),
+    proxy_password: str = Query(...), session_id: str =Query(default_factory=lambda: str(uuid.uuid4()))):
+    print(proxy_address, proxy_port, proxy_username, proxy_password , "hey")
+    if session_id not in driver_pool:
+        driver_pool[session_id] = await openBrowser(proxy_address, proxy_port, proxy_username, proxy_password)  
+
+    # Return the existing or newly created driver for the session ID
+    return driver_pool[session_id] , session_id
+
 
 async def get_session_driver(session_id: str = Query(...)):
     if session_id not in driver_pool:
-        driver_pool[session_id] = await openBrowser()
+        # driver_pool[session_id] = await openBrowser()
+        pass
     return driver_pool[session_id]
 
-async def get_authenticated_driver(cookiedata: dict = Query(...), session_id: str =Query(default_factory=lambda: str(uuid.uuid4()))):
+async def get_authenticated_driver(proxy_address: str = Query(...),
+    proxy_port: str = Query(...),
+    proxy_username: str = Query(...),
+    proxy_password: str = Query(...),cookiedata: dict = Query(...), session_id: str =Query(default_factory=lambda: str(uuid.uuid4()))):
     if session_id not in driver_pool:
         # If the session ID is not in the pool, create a new driver
-        driver_pool[session_id] = await openBrowserUserCookies(cookies)  # Use Chrome
+        driver_pool[session_id] = await openBrowserUserCookies(cookiedata, proxy_address, proxy_port, proxy_username, proxy_password )  # Use Chrome
     return driver_pool[session_id], session_id
 
-# @app.get("/openexisting")
-# async def openexisting(cookies: str = Query(...), driver=Depends(get_authenticated_driver)):
-#     return JSONResponse(content={"message": "Browser Opened!"})
+@app.get("/openexisting")
+async def openexisting( cookiedata: dict = Query(...) , driver_session: tuple =Depends(get_authenticated_driver)):
+    driver, session_id = driver_session
+    return JSONResponse(content={"message": "Browser Opened!"})
 
 
 @app.get("/login")
 async def login(email: str = Query(...), password: str = Query(...), driver_session: tuple =Depends(get_driver)):
     driver, session_id = driver_session
     await LinekdinLogin(email, password, driver)
-    return JSONResponse(content={"message": "Login Successful!", "session":session_id})
+    cookies = await getCookies(driver)
+    return JSONResponse(content={"message": "Login Successful!", "session":session_id, "cookies": cookies})
 
 @app.get("/getcodestatus")
 async def getCodeStatus(session_id: str = Query(...), driver = Depends(get_session_driver)):
@@ -107,8 +113,8 @@ async def totalPage(session_id: str = Query(...), driver = Depends(get_session_d
     return JSONResponse(content={"totalPage": totalPage})
 
 @app.get("/search")
-async def search(url :str = Query(...),resultnum: str =Query(...) ,session_id: str = Query(...) ,driver = Depends(get_session_driver)):
-    data = await getPageDataConnection(driver)
+async def search(url :str = Query(...),resultnum: str =Query(...) , message: str = Query(...),session_id: str = Query(...) ,driver = Depends(get_session_driver)):
+    data = await getPageDataConnection(driver,url, resultnum, message)
     return JSONResponse(content=data)
 
 # @app.get("/nextpage")

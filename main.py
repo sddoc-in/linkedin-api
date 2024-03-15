@@ -4,7 +4,7 @@ import uuid
 from fastapi.responses import HTMLResponse  
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from linkedin import openBrowser, openBrowserUserCookies, LinekdinLogin, getverificationCodeStatus, verifyCode, getCookies, getTotalPage, getPageDataConnection, sendConnectionRequest, openExistingUser
+from linkedin import openBrowser, openBrowserUserCookies, LinekdinLogin, getverificationCodeStatus, verifyCode, getCookies, get_expiry_time, getTotalPage, getPageDataConnection, sendConnectionRequest, openExistingUser
 app = FastAPI()
 
 origins = [
@@ -84,7 +84,13 @@ async def login(email: str = Query(...), password: str = Query(...), driver_sess
     driver, session_id = driver_session
     await LinekdinLogin(email, password, driver)
     cookies = await getCookies(driver)
-    return JSONResponse(content={"message": "Login Successful!", "session":session_id, "cookies": cookies})
+    codeFlag = await getverificationCodeStatus(driver)
+    message = "Login Successful!"
+    if codeFlag:
+        message = "Verification Code Required!"
+        return JSONResponse(content={"message": message, "session":session_id, "cookies": "not found", 'codeFlag': codeFlag})
+    expiry_time = await get_expiry_time(cookies)
+    return JSONResponse(content={"message": message, "session":session_id, "cookies": cookies,'expire': expiry_time ,'codeFlag': codeFlag})
 
 @app.get("/getcodestatus")
 async def getCodeStatus(session_id: str = Query(...), driver = Depends(get_session_driver)):
@@ -96,7 +102,8 @@ async def verifcode(code: str = Query(...), session_id: str = Query(...), driver
     codestatuse = await verifyCode(code, driver)
     if codestatuse:
         cookies = await getCookies(driver)
-        return JSONResponse(content={"message": "Code Verified!", "cookies": cookies , "session":session_id})
+        expiry_time = await get_expiry_time(cookies)
+        return JSONResponse(content={"message": "Code Verified!", "cookies": cookies , "session":session_id, "expire": expiry_time})
     else:
         return JSONResponse(content={"message": "Code Not Verified!"})
 
@@ -116,6 +123,7 @@ async def totalPage(session_id: str = Query(...), driver = Depends(get_session_d
 @app.get("/search")
 async def search(url :str = Query(...),resultnum: str =Query(...) , message: str = Query(...),session_id: str = Query(...) ,driver = Depends(get_session_driver)):
     data = await getPageDataConnection(driver,url, resultnum, message)
+    await closeBrowser(session_id, driver)
     return JSONResponse(content=data)
 
 # @app.get("/nextpage")
@@ -123,7 +131,6 @@ async def search(url :str = Query(...),resultnum: str =Query(...) , message: str
 #     await getNextPage(driver)
 #     return JSONResponse(content={"message": "Next Page Clicked!"})
 
-@app.get("/close")
 async def closeBrowser(session_id: str = Query(...), driver = Depends(get_session_driver)):
     driver.quit()
     del driver_pool[session_id]

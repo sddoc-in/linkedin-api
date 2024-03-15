@@ -76,7 +76,7 @@ async def get_authenticated_driver(proxy_address: str = Query(...),
 async def openexisting(driver_session: tuple =Depends(get_authenticated_driver)):
     driver, session_id = driver_session
     await openExistingUser(driver)
-    return JSONResponse(content={"message": "Browser Opened!"})
+    return JSONResponse(content={"session": session_id })
 
 
 @app.get("/login")

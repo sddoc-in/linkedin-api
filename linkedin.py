@@ -88,7 +88,7 @@ async def openBrowserUserCookies(cookies, proxy_address, proxy_port, proxy_usern
     
     return driver
 async def openExistingUser(driver):
-    driver.get("https://www.linkedin.com")
+    driver.get("https://www.linkedin.com/feed")
 
 async def LinekdinLogin(email, password, driver):
     driver.get("https://www.linkedin.com/login")

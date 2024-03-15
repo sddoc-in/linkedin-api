@@ -4,3 +4,4 @@ uvicorn
 bs4
 beautifulsoup4
 selenium
+selenium-wire

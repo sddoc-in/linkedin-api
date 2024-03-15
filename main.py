@@ -4,7 +4,7 @@ import uuid
 from fastapi.responses import HTMLResponse  
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from linkedin import openBrowser, openBrowserUserCookies, LinekdinLogin, getverificationCodeStatus, verifyCode, getCookies, getTotalPage, getPageDataConnection, sendConnectionRequest, 
+from linkedin import openBrowser, openBrowserUserCookies, LinekdinLogin, getverificationCodeStatus, verifyCode, getCookies, getTotalPage, getPageDataConnection, sendConnectionRequest, openExistingUser
 app = FastAPI()
 
 origins = [
@@ -73,8 +73,9 @@ async def get_authenticated_driver(proxy_address: str = Query(...),
     return driver_pool[session_id], session_id
 
 @app.get("/openexisting")
-async def openexisting( cookiedata: dict = Query(...) , driver_session: tuple =Depends(get_authenticated_driver)):
+async def openexisting(driver_session: tuple =Depends(get_authenticated_driver)):
     driver, session_id = driver_session
+    await openExistingUser(driver)
     return JSONResponse(content={"message": "Browser Opened!"})
 
 

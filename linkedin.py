@@ -116,11 +116,13 @@ async def verifyCode(code, driver):
 async def getCookies(driver):
     cookies = driver.get_cookies()
     return cookies
-async def getTotalPage(driver):
-    totalPage = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'results')]"))).text
-    return totalPage
 
-
+async def slow_type(element, text):
+    delay = 0  # 5 characters per word
+    for character in text:
+        element.send_keys(character)
+        time.sleep(delay)
+        
 async def getPageDataConnection(driver, url, resultnum, message):
     dataList = []
     driver.get(url)

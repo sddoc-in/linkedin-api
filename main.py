@@ -4,7 +4,16 @@ import uuid
 from fastapi.responses import HTMLResponse  
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from linkedin import openBrowser, openBrowserUserCookies, LinekdinLogin, getverificationCodeStatus, verifyCode, getCookies, get_expiry_time, getTotalPage, getPageDataConnection, sendConnectionRequest, openExistingUser
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
+from bson import ObjectId
+from linkedin import openBrowser, openBrowserUserCookies, LinekdinLogin, getverificationCodeStatus, verifyCode, getCookies, get_expiry_time, sendConnectionRequest, openExistingUser , startcampaign
+
+uri = "mongodb+srv://admin:BTzG4AjRskOaeFeb@leads.nhrq5wp.mongodb.net?retryWrites=true&w=majority"
+client = MongoClient(uri, server_api=ServerApi('1'))
+db = client.client
+campaigns = db.campaigns
+fetchedresults = db['fetched-results']
 app = FastAPI()
 
 origins = [
@@ -115,17 +124,17 @@ async def verifcode(code: str = Query(...), session_id: str = Query(...), driver
 #     else:
 #         return JSONResponse(content={"message": "Search Unsuccessful retry again!"})
 
-@app.get("/totalpage")
-async def totalPage(session_id: str = Query(...), driver = Depends(get_session_driver)):
-    totalPage = await getTotalPage(driver)
-    return JSONResponse(content={"totalPage": totalPage})
+# @app.get("/totalpage")
+# async def totalPage(session_id: str = Query(...), driver = Depends(get_session_driver)):
+#     totalPage = await getTotalPage(driver)
+#     return JSONResponse(content={"totalPage": totalPage})
 
-@app.get("/search")
-async def search(url :str = Query(...),resultnum: str =Query(...) , message: str = Query(...),session_id: str = Query(...) ,driver = Depends(get_session_driver)):
-    
-    data = await getPageDataConnection(driver,url, resultnum, message)
+@app.get("/start")
+async def search(campaignid :str = Query(...),session_id: str = Query(...) ,driver = Depends(get_session_driver)):
+    campaign = campaigns.find_one({"campaign_id": campaignid})
+    await startcampaign(campaigns, campaign, driver, campaignid, fetchedresults)
     await closeBrowser(session_id, driver)
-    return JSONResponse(content=data)
+    return JSONResponse(content={"message": "Campaign Started!", "session":session_id})
 
 # @app.get("/nextpage")
 # async def nextpage(session_id: str = Query(...), driver = Depends(get_session_driver)):

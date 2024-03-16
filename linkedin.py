@@ -17,7 +17,7 @@ async def openBrowser(proxy_address, proxy_port, proxy_username, proxy_password 
         }
     }
     # user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-    options.add_argument("--headless")
+    # options.add_argument("--headless")
     # options.add_argument(f'user-agent={user_agent}')
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
@@ -50,7 +50,7 @@ async def openBrowserUserCookies(cookies, proxy_address, proxy_port, proxy_usern
         }
     }
     # user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-    options.add_argument("--headless")
+    # options.add_argument("--headless")
     # options.add_argument(f'user-agent={user_agent}')
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
@@ -82,6 +82,47 @@ async def LinekdinLogin(email, password, driver):
     
     return True
     
+
+async def startcampaign(campaigns, camapignData, driver, campaignid, fetchedresults):
+    dataarray =[]
+    searchurl = camapignData["searchItems"]
+    if len(searchurl) == 0:
+        return {"message": "No search Items"}
+    steps = camapignData["steps"]
+    # print(steps, ">>>>>>>>>")
+    for url in searchurl:
+        # print(url)
+        like = False
+        send_message_flag = False
+        send_connection_request_flag = False
+        send_inmail_flag = False
+        link = url["query"]
+        send_msg_content=""
+        send_connection_msg=""
+        send_inmail_msg=""
+        resultNum = url["filter"]
+        # print(link, resultNum)
+        if 'sales' in url:
+            for step in steps:
+                send_inmail_flag = True
+                inmail_subject = step["subject"]
+                inmail_message = step["msg"]
+            data = await search_sales(driver, link, resultNum, inmail_subject, inmail_message, campaigns, fetchedresults, campaignid)
+            dataarray.extend(data)
+        for step in steps:
+            # print(step)
+            if step["key"] == "like_3_posts":
+                like = True
+            if step["key"] == "send_message":
+                send_message_flag = True
+                send_msg_content = step["msg"]
+            if step["key"] == "send_connection_request":
+                send_connection_request_flag = True
+                send_connection_msg = step["msg"]
+        # print(like, send_message_flag, send_connection_request_flag)
+        await getPageDataConnection(driver,link, resultNum,send_msg_content , send_connection_msg, like, send_message_flag, send_connection_request_flag, campaigns, fetchedresults, campaignid)
+        # dataarray.extend(data)
+    # return dataarray
 
 async def getverificationCodeStatus(driver):
     codeFlag = False
@@ -123,10 +164,18 @@ async def slow_type(element, text):
         element.send_keys(character)
         time.sleep(delay)
         
-async def getPageDataConnection(driver, url, resultnum, message):
+async def send_message(result,message):
+    WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, "//button[normalize-space()='Message']"))).click()
+    time.sleep(await getrandomNumber(1, 3))
+    element =  WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, "//div[@aria-label='Write a message…']")))
+    slow_type(element, message)
+    WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, "//button[normalize-space()='Send']"))).click()
+    WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, "//button[contains(., 'Close your conversation with')]"))).click()
+
+async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_connection_msg, like , send_message_flag , send_connection_request_flag , campaigns, fetchedresults, campaignid):
     dataList = []
     driver.get(url)
-    
+    isDoneflag = False
     # for i in range(1, int(resultnum)):
     i = 0
     while True:
@@ -134,41 +183,81 @@ async def getPageDataConnection(driver, url, resultnum, message):
         for result in findResultList:
             result_html = result.get_attribute('outerHTML')
             soup = BeautifulSoup(result_html, 'html.parser')
-        
-            try:
-                Name = soup.find('div', {'class': 't-roman t-sans'}).find('a').find('span').find('span').text.split(" ")
-                firstname = Name[0]
-                lastname = Name.pop()
-                profileLink = soup.find('div', {'class': 't-roman t-sans'}).find('a')['href']
-                UserTitle = soup.find('div', {'class': 'entity-result__primary-subtitle t-14 t-black t-normal'}).text.strip()
-                adress = soup.find('div', {'class': 'entity-result__secondary-subtitle t-14 t-normal'}).text.strip()
-                message= message.replace("{{first_name}}", firstname)
-                isconnected = await sendConnectionRequest(profileLink, message, driver)
-                dataList.append({'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink, 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected})
+            isconnected = "Not Connected"
+            isMessage = "send Message not used"
+            isLike = "not used"
+            # try:
+            Name = soup.find('div', {'class': 't-roman t-sans'}).find('a').find('span').find('span').text.split(" ")
+            firstname = Name[0]
+            lastname = Name.pop()
+            profileLink = soup.find('div', {'class': 't-roman t-sans'}).find('a')['href']
+            profileImage = soup.find('div', {'class': 'presence-entity presence-entity--size-3'}).find('img')['src']
+            UserTitle = soup.find('div', {'class': 'entity-result__primary-subtitle t-14 t-black t-normal'}).text.strip()
+            adress = soup.find('div', {'class': 'entity-result__secondary-subtitle t-14 t-normal'}).text.strip()
+            if send_message_flag:
+                send_msg_content= send_msg_content.replace("{{first_name}}", firstname).replace("{{last_name}}", lastname)
+                try:
+                    send_message(result, send_msg_content)
+                    isMessage = "Message Sent!"
+                except:
+                    isMessage = "Message Not Sent!"
+            if like:
+                isLike = await likePost(driver, profileLink)
+                time.sleep(await getrandomNumber(1, 3))
+            if send_connection_request_flag:
+                send_connection_msg = send_connection_msg.replace("{{first_name}}", firstname).replace("{{last_name}}", lastname)
+                try: 
+                    WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Connect']"))).click()
+                    time.sleep(await getrandomNumber(1, 3))
+                    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Add a note']"))).click()
+                    element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']")))
+                    await slow_type(element, send_connection_msg)
+                    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
+                except:
+                    isconnected = await sendConnectionRequest(profileLink, send_connection_msg, driver)
+
+            # dataDict = [{'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected['message'], 'isMessage': isMessage , 'isLike': isLike}]
+            dataDict = {'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected, 'isMessage': isMessage , 'isLike': isLike}
+            if i ==0:
+                if fetchedresults.find_one({'campaign_id': campaignid}) == None:
+                    result = {'campaign_id': campaignid, 'results': [dataDict]}
+                    fetchedresults.insert_one(result)
+                else:
+                    fetchedresults.update_one({'campaign_id': campaignid}, {'$push': {'results': dataDict}})
+            else:
+                fetchedresults.update_one({'campaign_id': campaignid}, {'$push': {'results': dataDict}})
+            campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'running'}})
+            campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i}})
+            if i == int(resultnum):
+                isDoneflag = True
+                break
+            # dataList.append({'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected, 'isMessage': isMessage , 'isLike': isLike})
                 # dataList.append({'Name': Name, 'profileLink': profileLink, 'UserTitle': UserTitle, 'adress': adress , 'message': message })
-            except:
-                continue
+            # except:
+            #     continue
             i += 1
-        if i == int(resultnum):
+        if isDoneflag:
+            campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'completed'}})
             break
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[@aria-label='Next']"))).click()
         
-    return dataList
+    driver.quit()
+    # return dataList
 
 async def sendInMail(driver, subject, message):
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, ".//input[@placeholder='Subject (required)']"))).send_keys(subject)
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Subject (required)']"))).send_keys(subject)
     time.sleep(await getrandomNumber(2, 5))
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, ".//textarea[@placeholder='Type your message here…']"))).send_keys(message)
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, ".//button[normalize-space()='Send']"))).click()
-    time.sleep(await getrandomNumber(2, 5))
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, ".//button[@data-control-name='overlay.close_overlay']"))).click()
-    return {"status": "success", "message": message, "subject": subject}
+    element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//textarea[@placeholder='Type your message here…']")))
+    await slow_type(element, message)
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//button[normalize-space()='Send']"))).click()
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//button[@data-control-name='overlay.close_overlay']"))).click()
+    return True
 
-async def search_sales(driver,url, result_num, subject, message):
+async def search_sales(driver,url, result_num, subject, message, campaigns, fetchedresults, campaignid):
     driver.get(url)
     DataList = []
     i = 0
-    
+    loopflag = False
     while True:
         findResultList = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, "*//li[@class='artdeco-list__item pl3 pv3 ']")))
         for result in findResultList:
@@ -192,31 +281,58 @@ async def search_sales(driver,url, result_num, subject, message):
                     'type': 'salesnavigator'
                 }
                 WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, ".//li[@class='message-overlay-trigger']"))).click()
-                is_inmail = await sendInMail(driver, subject, message)
-                data['inmail'] = is_inmail    
-                print(data)
+                try:
+                    is_inmail = await sendInMail(driver, subject, message)
+                except:
+                    is_inmail = False
+                data['inmail'] = is_inmail
+                if i == 0:
+                    result = {'campaign_id': campaignid,'type': 'salesnavigator' ,'results': data , }
+                    fetchedresults.insert_one(result)
+                else:
+                    fetchedresults.update_one({'campaign_id': campaignid}, {'$push': {'results': data}})
+                campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'running'}})
+                campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i}})
+                # DataList.append(data)
+                if i >= result_num:
+                    loopflag = True
+                    break    
                 i += 1
-            except Exception as e:
+            except :
                 continue
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//button[@aria-label='Next']"))).click()
             
-        if i >= result_num:
+        if loopflag:
             break
-    return DataList
+    driver.quit()
+    # return DataList
     # print(soup.prettify())
 
 
 async def likePost(driver, profile_url):
-    i=0
+    original_window = driver.window_handles[0]
+    driver.switch_to.new_window('tab')
+    driver.get(profile_url)
+    profile_url = driver.current_url
     driver.get(profile_url+"recent-activity/all/")
-    allPost = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, "*//li[@class='profile-creator-shared-feed-update__container']")))
-    for post in allPost:
-        driver.execute_script("arguments[0].scrollIntoView();", post)
-        WebDriverWait(post, 10).until(EC.presence_of_element_located((By.XPATH, ".//button[normalize-space()='Like']"))).click()
-        time.sleep(await getrandomNumber(2, 5))
-        i+=1
-        if i > 3:
-            break
+    isLiked = False
+    i=0
+    try:
+        # print("Likepost => ", profile_url)
+        allPost = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, "*//li[@class='profile-creator-shared-feed-update__container']")))
+        for post in allPost:
+            driver.execute_script("arguments[0].scrollIntoView();", post)
+            WebDriverWait(post, 10).until(EC.presence_of_element_located((By.XPATH, ".//button[normalize-space()='Like']"))).click()
+            time.sleep(await getrandomNumber(2, 5))
+            i+=1
+            if i > 3:
+                isLiked = True
+                break
+    except:
+        pass
+    driver.close()
+    driver.switch_to.window(original_window)
+    return isLiked
         
 
 # async def getNextPage(driver):
@@ -234,25 +350,27 @@ async def sendConnectionRequest(link, message, driver):
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//div[@class='ph5 pb5']//button[normalize-space()='Connect']"))).click()
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Add a note']"))).click()
         time.sleep(await getrandomNumber(1,3))
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']"))).send_keys(message)
+        element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']")))
+        await slow_type(element, message)
         time.sleep(await getrandomNumber(2,6))
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
         driver.close()
         driver.switch_to.window(original_window)
-        return {"message": "Connection Request Sent!"}
+        return "Connection Request Sent!"
     except:
         try:
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(*//button[normalize-space()='More'])[2]"))).click()
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(//div[starts-with(@aria-label, 'Invite')])[2]"))).click()
             time.sleep(await getrandomNumber(1,3))
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Add a note']"))).click()
-            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']"))).send_keys(message)
-            time.sleep(await getrandomNumber(2,6))
+            element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']")))
+            await slow_type(element, message)
+            time.sleep(await getrandomNumber(2,4))
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
             driver.close()
             driver.switch_to.window(original_window)
-            return {"message": "Connection Request Sent!"}
+            return "Connection Request Sent!"
         except :
             driver.close()
             driver.switch_to.window(original_window)
-            return {"message": "existing connection!"}
+            return "existing connection!"

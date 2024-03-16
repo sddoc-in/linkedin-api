@@ -122,6 +122,7 @@ async def totalPage(session_id: str = Query(...), driver = Depends(get_session_d
 
 @app.get("/search")
 async def search(url :str = Query(...),resultnum: str =Query(...) , message: str = Query(...),session_id: str = Query(...) ,driver = Depends(get_session_driver)):
+    
     data = await getPageDataConnection(driver,url, resultnum, message)
     await closeBrowser(session_id, driver)
     return JSONResponse(content=data)

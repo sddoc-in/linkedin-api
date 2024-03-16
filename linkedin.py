@@ -140,7 +140,7 @@ async def getPageDataConnection(driver, url, resultnum, message):
                 profileLink = soup.find('div', {'class': 't-roman t-sans'}).find('a')['href']
                 UserTitle = soup.find('div', {'class': 'entity-result__primary-subtitle t-14 t-black t-normal'}).text.strip()
                 adress = soup.find('div', {'class': 'entity-result__secondary-subtitle t-14 t-normal'}).text.strip()
-                message= message.replace("{{name}}", Name)
+                message= message.replace("{{first_name}}", firstname)
                 isconnected = await sendConnectionRequest(profileLink, message, driver)
                 dataList.append({'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink, 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected})
                 # dataList.append({'Name': Name, 'profileLink': profileLink, 'UserTitle': UserTitle, 'adress': adress , 'message': message })
@@ -152,6 +152,70 @@ async def getPageDataConnection(driver, url, resultnum, message):
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[@aria-label='Next']"))).click()
         
     return dataList
+
+async def sendInMail(driver, subject, message):
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, ".//input[@placeholder='Subject (required)']"))).send_keys(subject)
+    time.sleep(await getrandomNumber(2, 5))
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, ".//textarea[@placeholder='Type your message here…']"))).send_keys(message)
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, ".//button[normalize-space()='Send']"))).click()
+    time.sleep(await getrandomNumber(2, 5))
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, ".//button[@data-control-name='overlay.close_overlay']"))).click()
+    return {"status": "success", "message": message, "subject": subject}
+
+async def search_sales(driver,url, result_num, subject, message):
+    driver.get(url)
+    DataList = []
+    i = 0
+    
+    while True:
+        findResultList = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, "*//li[@class='artdeco-list__item pl3 pv3 ']")))
+        for result in findResultList:
+            driver.execute_script("arguments[0].scrollIntoView();", result)
+            result_html = result.get_attribute('outerHTML')
+            soup = BeautifulSoup(result_html, 'html.parser')
+            try:
+                name = soup.find('span', {'data-anonymize': 'person-name'}).text.strip().split()
+                address = soup.find('span', {'data-anonymize': 'location'}).text.strip()
+                profile_image = soup.find('img', {"data-anonymize":"headshot-photo"}).get('src')
+                firstname = name[0]
+                lastname = name.pop()
+                link_tag = soup.find('a', {'data-view-name': 'search-results-lead-name'})
+                link ="https://www.linkedin.com"+link_tag.get('href')
+                data = {
+                    'firstname': firstname,
+                    'lastname': lastname,
+                    'address': address,
+                    'profile_image' : profile_image,
+                    'profile_link': link,
+                    'type': 'salesnavigator'
+                }
+                WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, ".//li[@class='message-overlay-trigger']"))).click()
+                is_inmail = await sendInMail(driver, subject, message)
+                data['inmail'] = is_inmail    
+                print(data)
+                i += 1
+            except Exception as e:
+                continue
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//button[@aria-label='Next']"))).click()
+            
+        if i >= result_num:
+            break
+    return DataList
+    # print(soup.prettify())
+
+
+async def likePost(driver, profile_url):
+    i=0
+    driver.get(profile_url+"recent-activity/all/")
+    allPost = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, "*//li[@class='profile-creator-shared-feed-update__container']")))
+    for post in allPost:
+        driver.execute_script("arguments[0].scrollIntoView();", post)
+        WebDriverWait(post, 10).until(EC.presence_of_element_located((By.XPATH, ".//button[normalize-space()='Like']"))).click()
+        time.sleep(await getrandomNumber(2, 5))
+        i+=1
+        if i > 3:
+            break
+        
 
 # async def getNextPage(driver):
 #     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[@aria-label='Next']"))).click()

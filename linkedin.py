@@ -186,7 +186,7 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
     # for i in range(1, int(resultnum)):
     i = 0
     while True:
-        findResultList = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, "*//li[@class='reusable-search__result-container']")))
+        findResultList = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.XPATH, "*//li[@class='reusable-search__result-container']")))
         for result in findResultList:
             result_html = result.get_attribute('outerHTML')
             soup = BeautifulSoup(result_html, 'html.parser')

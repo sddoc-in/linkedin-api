@@ -8,6 +8,8 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+
+import asyncio
 # from bson import ObjectId
 from linkedin import openBrowser, openBrowserUserCookies, LinekdinLogin, getverificationCodeStatus, verifyCode, getCookies, get_expiry_time, sendConnectionRequest, openExistingUser , startcampaign
 
@@ -144,7 +146,7 @@ async def verifcode(code: str = Query(...), session_id: str = Query(...), driver
 @app.get("/start")
 async def search(campaignid :str = Query(...),session_id: str = Query(...) ,driver = Depends(get_session_driver)):
     campaign = campaigns.find_one({"campaign_id": campaignid})
-    startcampaign(campaigns, campaign, driver, campaignid, fetchedresults)
+    asyncio.create_task(startcampaign(campaigns, campaign, driver, campaignid, fetchedresults))
     return JSONResponse(content={"message": "Campaign Started!", "session":session_id})
 
 # @app.get("/nextpage")
@@ -152,7 +154,7 @@ async def search(campaignid :str = Query(...),session_id: str = Query(...) ,driv
 #     await getNextPage(driver)
 #     return JSONResponse(content={"message": "Next Page Clicked!"})
 
-def closeUserBrowser(session_id, driver):
+async def closeUserBrowser(session_id, driver):
     driver.quit()
     del driver_pool[session_id]
     return JSONResponse(content={"message": "Browser Closed!"})

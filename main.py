@@ -106,9 +106,9 @@ async def login(email: str = Query(...), password: str = Query(...), driver_sess
         message = "Verification Code Required!"
         return JSONResponse(content={"message": message, "session":session_id, "cookies": "not found", 'codeFlag': codeFlag})
     closeUserBrowser(session_id, driver)
-    expiry_time = await get_expiry_time(cookies)
+    # expiry_time = await get_expiry_time(cookies)
     await closeBrowser(session_id, driver)
-    return JSONResponse(content={"message": message, "session":session_id, "cookies": cookies,'expire': expiry_time ,'codeFlag': codeFlag})
+    return JSONResponse(content={"message": message, "session":session_id, "cookies": cookies,'codeFlag': codeFlag})
 
 @app.get("/getcodestatus")
 async def getCodeStatus(session_id: str = Query(...), driver = Depends(get_session_driver)):

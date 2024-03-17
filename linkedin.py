@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 
 
 async def openBrowser(proxy_address, proxy_port, proxy_username, proxy_password ):
+    
     options = Options()
     proxy = {
         'proxy': {
@@ -36,6 +37,7 @@ async def openBrowser(proxy_address, proxy_port, proxy_username, proxy_password 
         driver = webdriver.Chrome(seleniumwire_options=proxy,options=options)
         # driver.get('https://www.whatismypublicip.com/')
         driver.set_window_size(1920, 1080)
+    print("Opening Browser ->>>>>>>")
     return driver
 
  
@@ -68,9 +70,10 @@ async def openBrowserUserCookies(cookies, proxy_address, proxy_port, proxy_usern
         driver.add_cookie(cookie)
     driver.get("https://www.linkedin.com")
     driver.set_window_size(1920, 1080)
-    
+    print("Opening cookie Browser ->>>>>>>")
     return driver
 async def openExistingUser(driver):
+    print("Opening Existing Browser ->>>>>>>")
     driver.get("https://www.linkedin.com/feed")
 
 async def LinekdinLogin(email, password, driver):
@@ -79,7 +82,7 @@ async def LinekdinLogin(email, password, driver):
     time.sleep(await getrandomNumber(2,6))
     driver.find_element(By.XPATH, "*//input[@id = 'password']").send_keys(password)
     driver.find_element(By.XPATH, "*//button[@aria-label= 'Sign in']").click()
-    
+    print("<<<<<<<- login into account succes   ->>>>>>>")
     return True
     
 
@@ -119,7 +122,8 @@ async def startcampaign(campaigns, camapignData, driver, campaignid, fetchedresu
             if step["key"] == "send_connection_request":
                 send_connection_request_flag = True
                 send_connection_msg = step["msg"]
-        # print(like, send_message_flag, send_connection_request_flag)
+        print("<<<<<<<- campaign started login into account succes   ->>>>>>>")
+        print(">>>>>>>>>>>>>> " , like, send_message_flag, send_connection_request_flag, resultNum, "<<<<<<" )
         await getPageDataConnection(driver,link, resultNum,send_msg_content , send_connection_msg, like, send_message_flag, send_connection_request_flag, campaigns, fetchedresults, campaignid)
         # dataarray.extend(data)
     driver.quit()
@@ -131,7 +135,8 @@ async def getverificationCodeStatus(driver):
         h1 = driver.find_element(By.XPATH, "*//h1[@class = 'content__header']").text
         if "verification" in h1:
             codeFlag = True        
-    except:
+    except Exception as e :
+        print("<<<<<<<- exception    ->>>>>>>", e )
         codeFlag = False
     return codeFlag
 
@@ -177,6 +182,7 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
     dataList = []
     driver.get(url)
     isDoneflag = False
+
     # for i in range(1, int(resultnum)):
     i = 0
     while True:
@@ -187,57 +193,61 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
             isconnected = "Not Connected"
             isMessage = "send Message not used"
             isLike = "not used"
-            # try:
-            Name = soup.find('div', {'class': 't-roman t-sans'}).find('a').find('span').find('span').text.split(" ")
-            firstname = Name[0]
-            lastname = Name.pop()
-            profileLink = soup.find('div', {'class': 't-roman t-sans'}).find('a')['href']
-            profileImage = soup.find('div', {'class': 'presence-entity presence-entity--size-3'}).find('img')['src']
-            UserTitle = soup.find('div', {'class': 'entity-result__primary-subtitle t-14 t-black t-normal'}).text.strip()
-            adress = soup.find('div', {'class': 'entity-result__secondary-subtitle t-14 t-normal'}).text.strip()
-            if send_message_flag:
-                send_msg_content= send_msg_content.replace("{first_name}", firstname).replace("{last_name}", lastname)
-                try:
-                    send_message(result, send_msg_content)
-                    isMessage = "Message Sent!"
-                except:
-                    isMessage = "Message Not Sent!"
-            if like:
-                isLike = await likePost(driver, profileLink)
-                time.sleep(await getrandomNumber(1, 3))
-            if send_connection_request_flag:
-                send_connection_msg = send_connection_msg.replace("{first_name}", firstname).replace("{last_name}", lastname)
-                try: 
-                    WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Connect']"))).click()
+            try:
+                Name = soup.find('div', {'class': 't-roman t-sans'}).find('a').find('span').find('span').text.split(" ")
+                firstname = Name[0]
+                lastname = Name.pop()
+                profileLink = soup.find('div', {'class': 't-roman t-sans'}).find('a')['href']
+                profileImage = soup.find('div', {'class': 'presence-entity presence-entity--size-3'}).find('img')['src']
+                UserTitle = soup.find('div', {'class': 'entity-result__primary-subtitle t-14 t-black t-normal'}).text.strip()
+                adress = soup.find('div', {'class': 'entity-result__secondary-subtitle t-14 t-normal'}).text.strip()
+                if send_message_flag:
+                    send_msg_content= send_msg_content.replace("{first_name}", firstname).replace("{last_name}", lastname)
+                    try:
+                        send_message(result, send_msg_content)
+                        isMessage = "Message Sent!"
+                    except:
+                        isMessage = "Message Not Sent!"
+                if like:
+                    isLike = await likePost(driver, profileLink)
                     time.sleep(await getrandomNumber(1, 3))
-                    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Add a note']"))).click()
-                    element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']")))
-                    await slow_type(element, send_connection_msg)
-                    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
-                except:
-                    isconnected = await sendConnectionRequest(profileLink, send_connection_msg, driver)
+                if send_connection_request_flag:
+                    send_connection_msg = send_connection_msg.replace("{first_name}", firstname).replace("{last_name}", lastname)
+                    try: 
+                        WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Connect']"))).click()
+                        time.sleep(await getrandomNumber(1, 3))
+                        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Add a note']"))).click()
+                        element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']")))
+                        await slow_type(element, send_connection_msg)
+                        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
+                    except:
+                        isconnected = await sendConnectionRequest(profileLink, send_connection_msg, driver)
 
-            # dataDict = [{'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected['message'], 'isMessage': isMessage , 'isLike': isLike}]
-            dataDict = {'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected, 'isMessage': isMessage , 'isLike': isLike}
-            print(dataDict)
-            if i ==0:
-                if fetchedresults.find_one({'campaign_id': campaignid}) == None:
-                    result = {'campaign_id': campaignid, 'results': [dataDict]}
-                    fetchedresults.insert_one(result)
+                # dataDict = [{'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected['message'], 'isMessage': isMessage , 'isLike': isLike}]
+                dataDict = {'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected, 'isMessage': isMessage , 'isLike': isLike}
+                print(dataDict)
+                if i ==0:
+                    if fetchedresults.find_one({'campaign_id': campaignid}) == None:
+                        result = {'campaign_id': campaignid, 'results': [dataDict]}
+                        fetchedresults.insert_one(result)
+                    else:
+                        fetchedresults.update_one({'campaign_id': campaignid}, {'$push': {'results': dataDict}})
                 else:
                     fetchedresults.update_one({'campaign_id': campaignid}, {'$push': {'results': dataDict}})
-            else:
-                fetchedresults.update_one({'campaign_id': campaignid}, {'$push': {'results': dataDict}})
-            # campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'running'}})
-            campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i}})
-            if i == int(resultnum):
-                isDoneflag = True
-                break
-            # dataList.append({'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected, 'isMessage': isMessage , 'isLike': isLike})
-                # dataList.append({'Name': Name, 'profileLink': profileLink, 'UserTitle': UserTitle, 'adress': adress , 'message': message })
-            # except:
-            #     continue
-            i += 1
+                # campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'running'}})
+                campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i}})
+                
+                if i == int(resultnum):
+                    print("<<<<<< done success campagin >>>>>>> ")
+                    isDoneflag = True
+                    break
+                i += 1
+                # dataList.append({'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected, 'isMessage': isMessage , 'isLike': isLike})
+                    # dataList.append({'Name': Name, 'profileLink': profileLink, 'UserTitle': UserTitle, 'adress': adress , 'message': message })
+            except:
+                print("<<<<<< error in result gathering data >>>>>>> ")
+                continue
+            
         if isDoneflag:
             campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'completed'}})
             break

@@ -91,6 +91,7 @@ async def openexisting(driver_session: tuple =Depends(get_authenticated_driver))
 @app.get("/login")
 async def login(email: str = Query(...), password: str = Query(...), driver_session: tuple =Depends(get_driver)):
     driver, session_id = driver_session
+    print(email, " ", password)
     await LinekdinLogin(email, password, driver)
     cookies = await getCookies(driver)
     codeFlag = await getverificationCodeStatus(driver)

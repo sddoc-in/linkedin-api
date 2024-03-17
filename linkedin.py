@@ -223,9 +223,9 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
                     except:
                         isconnected = await sendConnectionRequest(profileLink, send_connection_msg, driver)
                 
-                company_name, profileLink = await getCompanyName(driver, profileLink)
+                # company_name, profileLink = await getCompanyName(driver, profileLink)
                 # dataDict = [{'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected['message'], 'isMessage': isMessage , 'isLike': isLike}]
-                dataDict = {'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle,"company": company_name ,'address': adress , 'isconnected': isconnected, 'isMessage': isMessage , 'isLike': isLike}
+                dataDict = {'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle,'address': adress , 'isconnected': isconnected, 'isMessage': isMessage , 'isLike': isLike}
                 print(dataDict)
                 if i ==0:
                     if fetchedresults.find_one({'campaign_id': campaignid}) == None:

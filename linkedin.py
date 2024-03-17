@@ -88,9 +88,10 @@ async def LinekdinLogin(email, password, driver):
     
 
 async def startcampaign( driver, campaignid, uri):
-    client = MongoClient(uri, server_api=ServerApi('1'))
+    client = await MongoClient(uri, server_api=ServerApi('1'))
     db = client.client
     campaigns = db.campaigns
+    camapignData = campaigns.find_one({'campaign_id': campaignid})
     fetchedresults = db['fetched-results']
     searchurl = camapignData["searchItems"]
     if len(searchurl) == 0:

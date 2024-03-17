@@ -6,17 +6,18 @@ import logging
 from fastapi.responses import HTMLResponse  
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 
 import asyncio
 # from bson import ObjectId
 from linkedin import openBrowser, openBrowserUserCookies, LinekdinLogin, getverificationCodeStatus, verifyCode, getCookies, get_expiry_time, sendConnectionRequest, openExistingUser , startcampaign
 
 uri = "mongodb+srv://admin:BTzG4AjRskOaeFeb@leads.nhrq5wp.mongodb.net?retryWrites=true&w=majority"
-# client = MongoClient(uri, server_api=ServerApi('1'))
-# db = client.client
-# campaigns = db.campaigns
-# fetchedresults = db['fetched-results']
+client = MongoClient(uri, server_api=ServerApi('1'))
+db = client.client
+campaigns = db.campaigns
+fetchedresults = db['fetched-results']
 app = FastAPI()
 
 origins = [
@@ -144,7 +145,8 @@ async def verifcode(code: str = Query(...), session_id: str = Query(...), driver
 
 @app.get("/start")
 async def search(campaignid :str = Query(...),session_id: str = Query(...) ,driver = Depends(get_session_driver)):
-    asyncio.create_task(startcampaign(driver, campaignid, uri))
+    campaign = campaigns.find_one({"campaign_id": campaignid})
+    asyncio.create_task(startcampaign(campaigns, campaign, driver, campaignid, fetchedresults))
     return JSONResponse(content={"message": "Campaign Started!", "session":session_id})
 
 # @app.get("/nextpage")

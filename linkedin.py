@@ -255,13 +255,18 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
         
     # return dataList
 async def getCompanyName(driver, url):
+    original_window = driver.window_handles[0]
+    driver.switch_to.new_window('tab')
     driver.get(url)
+    company_name = "Not Found"
     try:
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(//div[@class='ph5 pb5']//ul[@class = 'pv-text-details__right-panel']/li)[1]"))).text
     except  Exception as e:
         company_name = "Not Found"
         print("<<<<<< error in getting company name >>>>>>> ", e)
     linkedinUrl = driver.current_url
+    driver.close()
+    driver.switch_to.window(original_window)
     return company_name.text, linkedinUrl
 
 async def sendInMail(driver, subject, message):

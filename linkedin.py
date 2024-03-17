@@ -196,7 +196,7 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
             UserTitle = soup.find('div', {'class': 'entity-result__primary-subtitle t-14 t-black t-normal'}).text.strip()
             adress = soup.find('div', {'class': 'entity-result__secondary-subtitle t-14 t-normal'}).text.strip()
             if send_message_flag:
-                send_msg_content= send_msg_content.replace("{{first_name}}", firstname).replace("{{last_name}}", lastname)
+                send_msg_content= send_msg_content.replace("{first_name}", firstname).replace("{last_name}", lastname)
                 try:
                     send_message(result, send_msg_content)
                     isMessage = "Message Sent!"
@@ -206,7 +206,7 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
                 isLike = await likePost(driver, profileLink)
                 time.sleep(await getrandomNumber(1, 3))
             if send_connection_request_flag:
-                send_connection_msg = send_connection_msg.replace("{{first_name}}", firstname).replace("{{last_name}}", lastname)
+                send_connection_msg = send_connection_msg.replace("{first_name}", firstname).replace("{last_name}", lastname)
                 try: 
                     WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Connect']"))).click()
                     time.sleep(await getrandomNumber(1, 3))
@@ -227,7 +227,7 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
                     fetchedresults.update_one({'campaign_id': campaignid}, {'$push': {'results': dataDict}})
             else:
                 fetchedresults.update_one({'campaign_id': campaignid}, {'$push': {'results': dataDict}})
-            campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'running'}})
+            # campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'running'}})
             campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i}})
             if i == int(resultnum):
                 isDoneflag = True
@@ -282,16 +282,21 @@ async def search_sales(driver,url, result_num, subject, message, campaigns, fetc
                 }
                 WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, ".//li[@class='message-overlay-trigger']"))).click()
                 try:
+                    message = message.replace("{first_name}", firstname).replace("{last_name}", lastname)
                     is_inmail = await sendInMail(driver, subject, message)
                 except:
                     is_inmail = False
                 data['inmail'] = is_inmail
                 if i == 0:
+                    if fetchedresults.find_one({'campaign_id': campaignid}) == None:
+                        result = {'campaign_id': campaignid,'type': 'salesnavigator' ,'results': [data] }
+                        fetchedresults.insert_one(result)
+                    
                     result = {'campaign_id': campaignid,'type': 'salesnavigator' ,'results': data , }
-                    fetchedresults.insert_one(result)
+                    fetchedresults.update_one(result)
                 else:
                     fetchedresults.update_one({'campaign_id': campaignid}, {'$push': {'results': data}})
-                campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'running'}})
+                # campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'running'}})
                 campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i}})
                 # DataList.append(data)
                 if i >= result_num:

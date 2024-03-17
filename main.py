@@ -1,6 +1,8 @@
 from fastapi import Depends, FastAPI, Query, HTTPException, Body
 from typing import List, Dict, Any
 import uuid
+from urllib.parse import unquote
+
 from fastapi.responses import HTMLResponse  
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -58,7 +60,9 @@ async def get_driver(proxy_address: str = Query(...),
     proxy_port: str = Query(...),
     proxy_username: str = Query(...),
     proxy_password: str = Query(...), session_id: str =Query(default_factory=lambda: str(uuid.uuid4()))):
-    print(proxy_address, proxy_port, proxy_username, proxy_password , "hey")
+    # print(proxy_address, proxy_port, proxy_username, proxy_password , "hey")
+    proxy_username = unquote(proxy_username)
+    proxy_password = unquote(proxy_password)
     if session_id not in driver_pool:
         driver_pool[session_id] = await openBrowser(proxy_address, proxy_port, proxy_username, proxy_password)  
 
@@ -76,6 +80,8 @@ async def get_authenticated_driver(proxy_address: str = Query(...),
     proxy_port: str = Query(...),
     proxy_username: str = Query(...),
     proxy_password: str = Query(...),cookiedata: dict= Body(...), session_id: str =Query(default_factory=lambda: str(uuid.uuid4()))):
+    proxy_username = unquote(proxy_username)
+    proxy_password = unquote(proxy_password)
     if session_id not in driver_pool:
         # If the session ID is not in the pool, create a new driver
         driver_pool[session_id] = await openBrowserUserCookies(cookiedata['cookies'], proxy_address, proxy_port, proxy_username, proxy_password )  # Use Chrome
@@ -88,10 +94,12 @@ async def openexisting(driver_session: tuple =Depends(get_authenticated_driver))
     return JSONResponse(content={"session": session_id })
 
 
-@app.post("/login")
+@app.get("/login")
 async def login(email: str = Query(...), password: str = Query(...), driver_session: tuple =Depends(get_driver)):
     driver, session_id = driver_session
-    print(email, " ", password)
+    email = unquote(email)
+    password = unquote(password)
+
     await LinekdinLogin(email, password, driver)
     cookies = await getCookies(driver)
     codeFlag = await getverificationCodeStatus(driver)

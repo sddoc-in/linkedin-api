@@ -219,6 +219,7 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
 
             # dataDict = [{'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected['message'], 'isMessage': isMessage , 'isLike': isLike}]
             dataDict = {'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected, 'isMessage': isMessage , 'isLike': isLike}
+            print(dataDict)
             if i ==0:
                 if fetchedresults.find_one({'campaign_id': campaignid}) == None:
                     result = {'campaign_id': campaignid, 'results': [dataDict]}

@@ -144,7 +144,6 @@ async def verifcode(code: str = Query(...), session_id: str = Query(...), driver
 
 @app.get("/start")
 async def search(campaignid :str = Query(...),session_id: str = Query(...) ,driver = Depends(get_session_driver)):
-    campaign = campaigns.find_one({"campaign_id": campaignid})
     asyncio.create_task(startcampaign(driver, campaignid, uri))
     return JSONResponse(content={"message": "Campaign Started!", "session":session_id})
 

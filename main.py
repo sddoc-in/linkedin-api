@@ -2,7 +2,7 @@ from fastapi import Depends, FastAPI, Query, HTTPException, Body
 from typing import List, Dict, Any
 import uuid
 from urllib.parse import unquote
-
+import logging 
 from fastapi.responses import HTMLResponse  
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -88,7 +88,10 @@ async def get_authenticated_driver(proxy_address: str = Query(...),
 @app.post("/openexisting")
 async def openexisting(driver_session: tuple =Depends(get_authenticated_driver)):
     driver, session_id = driver_session
-    await openExistingUser(driver)
+    try:
+        await openExistingUser(driver)
+    except Exception as e:
+        return JSONResponse(content={"message": "Cookie Error in opening existing user!", "error": str(e)})
     return JSONResponse(content={"session": session_id })
 
 
@@ -97,7 +100,6 @@ async def login(email: str = Query(...), password: str = Query(...), driver_sess
     driver, session_id = driver_session
     email = unquote(email)
     password = unquote(password)
-
     await LinekdinLogin(email, password, driver)
     cookies = await getCookies(driver)
     codeFlag = await getverificationCodeStatus(driver)

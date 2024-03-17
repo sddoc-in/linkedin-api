@@ -222,9 +222,10 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
                         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
                     except:
                         isconnected = await sendConnectionRequest(profileLink, send_connection_msg, driver)
-                # company_name, profileLink = await getCompanyName(driver, profileLink)
+                
+                company_name, profileLink = await getCompanyName(driver, profileLink)
                 # dataDict = [{'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected['message'], 'isMessage': isMessage , 'isLike': isLike}]
-                dataDict = {'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle,'address': adress , 'isconnected': isconnected, 'isMessage': isMessage , 'isLike': isLike}
+                dataDict = {'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle,"company": company_name ,'address': adress , 'isconnected': isconnected, 'isMessage': isMessage , 'isLike': isLike}
                 print(dataDict)
                 if i ==0:
                     if fetchedresults.find_one({'campaign_id': campaignid}) == None:
@@ -257,14 +258,15 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
 async def getCompanyName(driver, url):
     original_window = driver.window_handles[0]
     driver.switch_to.new_window('tab')
-    driver.get(url)
     company_name = "Not Found"
+    driver.get(url)
     try:
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "(//div[@class='ph5 pb5']//ul[@class = 'pv-text-details__right-panel']/li)[1]"))).text
     except  Exception as e:
         company_name = "Not Found"
         print("<<<<<< error in getting company name >>>>>>> ", e)
     linkedinUrl = driver.current_url
+    print("<<<<<< getting company name >>>>>>> ", company_name)
     driver.close()
     driver.switch_to.window(original_window)
     return company_name.text, linkedinUrl

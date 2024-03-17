@@ -88,7 +88,7 @@ async def openexisting(driver_session: tuple =Depends(get_authenticated_driver))
     return JSONResponse(content={"session": session_id })
 
 
-@app.get("/login")
+@app.post("/login")
 async def login(email: str = Query(...), password: str = Query(...), driver_session: tuple =Depends(get_driver)):
     driver, session_id = driver_session
     print(email, " ", password)
@@ -100,6 +100,7 @@ async def login(email: str = Query(...), password: str = Query(...), driver_sess
         message = "Verification Code Required!"
         return JSONResponse(content={"message": message, "session":session_id, "cookies": "not found", 'codeFlag': codeFlag})
     expiry_time = await get_expiry_time(cookies)
+    await closeBrowser(session_id, driver)
     return JSONResponse(content={"message": message, "session":session_id, "cookies": cookies,'expire': expiry_time ,'codeFlag': codeFlag})
 
 @app.get("/getcodestatus")
@@ -113,6 +114,7 @@ async def verifcode(code: str = Query(...), session_id: str = Query(...), driver
     if codestatuse:
         cookies = await getCookies(driver)
         expiry_time = await get_expiry_time(cookies)
+        await closeBrowser(session_id, driver)
         return JSONResponse(content={"message": "Code Verified!", "cookies": cookies , "session":session_id, "expire": expiry_time})
     else:
         return JSONResponse(content={"message": "Code Not Verified!"})

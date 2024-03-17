@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time , random    
 from bs4 import BeautifulSoup
-from main import closeUserBrowser
+
 
 async def openBrowser(proxy_address, proxy_port, proxy_username, proxy_password ):
     options = Options()
@@ -83,7 +83,7 @@ async def LinekdinLogin(email, password, driver):
     return True
     
 
-async def startcampaign(campaigns, camapignData, driver, campaignid, fetchedresults, session_id):
+async def startcampaign(campaigns, camapignData, driver, campaignid, fetchedresults):
     dataarray =[]
     searchurl = camapignData["searchItems"]
     if len(searchurl) == 0:
@@ -122,7 +122,7 @@ async def startcampaign(campaigns, camapignData, driver, campaignid, fetchedresu
         # print(like, send_message_flag, send_connection_request_flag)
         await getPageDataConnection(driver,link, resultNum,send_msg_content , send_connection_msg, like, send_message_flag, send_connection_request_flag, campaigns, fetchedresults, campaignid)
         # dataarray.extend(data)
-    closeUserBrowser(session_id, driver)
+    driver.quit()
     # return dataarray
 
 async def getverificationCodeStatus(driver):

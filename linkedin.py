@@ -7,7 +7,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time , random    
 from bs4 import BeautifulSoup
-
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 
 async def openBrowser(proxy_address, proxy_port, proxy_username, proxy_password ):
     
@@ -86,8 +87,11 @@ async def LinekdinLogin(email, password, driver):
     return True
     
 
-async def startcampaign(campaigns, camapignData, driver, campaignid, fetchedresults):
-    dataarray =[]
+async def startcampaign( driver, campaignid, uri):
+    client = MongoClient(uri, server_api=ServerApi('1'))
+    db = client.client
+    campaigns = db.campaigns
+    fetchedresults = db['fetched-results']
     searchurl = camapignData["searchItems"]
     if len(searchurl) == 0:
         return {"message": "No search Items"}
@@ -126,6 +130,7 @@ async def startcampaign(campaigns, camapignData, driver, campaignid, fetchedresu
         print(">>>>>>>>>>>>>> " , like, send_message_flag, send_connection_request_flag, resultNum, "<<<<<<" )
         await getPageDataConnection(driver,link, resultNum,send_msg_content , send_connection_msg, like, send_message_flag, send_connection_request_flag, campaigns, fetchedresults, campaignid)
         # dataarray.extend(data)
+    client.close()
     driver.quit()
     # return dataarray
 

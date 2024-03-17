@@ -244,8 +244,8 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
                 i += 1
                 # dataList.append({'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected, 'isMessage': isMessage , 'isLike': isLike})
                     # dataList.append({'Name': Name, 'profileLink': profileLink, 'UserTitle': UserTitle, 'adress': adress , 'message': message })
-            except:
-                print("<<<<<< error in result gathering data >>>>>>> ")
+            except Exception as e:
+                print("<<<<<< error in result gathering data >>>>>>> ", e)
                 continue
             
         if isDoneflag:

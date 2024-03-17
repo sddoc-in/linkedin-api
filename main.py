@@ -61,8 +61,6 @@ async def get_driver(proxy_address: str = Query(...),
     proxy_username: str = Query(...),
     proxy_password: str = Query(...), session_id: str =Query(default_factory=lambda: str(uuid.uuid4()))):
     # print(proxy_address, proxy_port, proxy_username, proxy_password , "hey")
-    proxy_username = unquote(proxy_username)
-    proxy_password = unquote(proxy_password)
     if session_id not in driver_pool:
         driver_pool[session_id] = await openBrowser(proxy_address, proxy_port, proxy_username, proxy_password)  
 
@@ -87,7 +85,7 @@ async def get_authenticated_driver(proxy_address: str = Query(...),
         driver_pool[session_id] = await openBrowserUserCookies(cookiedata['cookies'], proxy_address, proxy_port, proxy_username, proxy_password )  # Use Chrome
     return driver_pool[session_id], session_id
 
-@app.get("/openexisting")
+@app.post("/openexisting")
 async def openexisting(driver_session: tuple =Depends(get_authenticated_driver)):
     driver, session_id = driver_session
     await openExistingUser(driver)
@@ -107,6 +105,7 @@ async def login(email: str = Query(...), password: str = Query(...), driver_sess
     if codeFlag:
         message = "Verification Code Required!"
         return JSONResponse(content={"message": message, "session":session_id, "cookies": "not found", 'codeFlag': codeFlag})
+    closeUserBrowser(session_id, driver)
     expiry_time = await get_expiry_time(cookies)
     await closeBrowser(session_id, driver)
     return JSONResponse(content={"message": message, "session":session_id, "cookies": cookies,'expire': expiry_time ,'codeFlag': codeFlag})
@@ -122,7 +121,7 @@ async def verifcode(code: str = Query(...), session_id: str = Query(...), driver
     if codestatuse:
         cookies = await getCookies(driver)
         expiry_time = await get_expiry_time(cookies)
-        await closeBrowser(session_id, driver)
+        closeUserBrowser(session_id, driver)
         return JSONResponse(content={"message": "Code Verified!", "cookies": cookies , "session":session_id, "expire": expiry_time})
     else:
         return JSONResponse(content={"message": "Code Not Verified!"})
@@ -143,8 +142,8 @@ async def verifcode(code: str = Query(...), session_id: str = Query(...), driver
 @app.get("/start")
 async def search(campaignid :str = Query(...),session_id: str = Query(...) ,driver = Depends(get_session_driver)):
     campaign = campaigns.find_one({"campaign_id": campaignid})
-    await startcampaign(campaigns, campaign, driver, campaignid, fetchedresults)
-    await closeBrowser(session_id, driver)
+    startcampaign(campaigns, campaign, driver, campaignid, fetchedresults, session_id)
+    
     return JSONResponse(content={"message": "Campaign Started!", "session":session_id})
 
 # @app.get("/nextpage")
@@ -152,6 +151,13 @@ async def search(campaignid :str = Query(...),session_id: str = Query(...) ,driv
 #     await getNextPage(driver)
 #     return JSONResponse(content={"message": "Next Page Clicked!"})
 
+def closeUserBrowser(session_id, driver):
+    driver.quit()
+    del driver_pool[session_id]
+    return JSONResponse(content={"message": "Browser Closed!"})
+
+
+@app.get("/close")
 async def closeBrowser(session_id: str = Query(...), driver = Depends(get_session_driver)):
     driver.quit()
     del driver_pool[session_id]

@@ -68,7 +68,7 @@ async def openBrowserUserCookies(cookies, proxy_address, proxy_port, proxy_usern
     driver.get("https://www.linkedin.com")
     for cookie in cookies:
         driver.add_cookie(cookie)
-    driver.get("https://www.linkedin.com")
+    # driver.get("https://www.linkedin.com")
     driver.set_window_size(1920, 1080)
     print("Opening cookie Browser ->>>>>>>")
     return driver
@@ -76,12 +76,32 @@ async def openExistingUser(driver):
     print("Opening Existing Browser ->>>>>>>")
     driver.get("https://www.linkedin.com/feed")
 
+# async def LinekdinLogin(email, password, driver):
+#     driver.get("https://www.linkedin.com/login")
+#     driver.find_element(By.XPATH, "*//input[@id = 'username']").send_keys(email)
+#     time.sleep(await getrandomNumber(2,6))
+#     driver.find_element(By.XPATH, "*//input[@id = 'password']").send_keys(password)
+#     driver.find_element(By.XPATH, "*//button[@aria-label= 'Sign in']").click()
+#     print("<<<<<<<- login into account succes   ->>>>>>>")
+#     return True
+
 async def LinekdinLogin(email, password, driver):
     driver.get("https://www.linkedin.com/login")
     driver.find_element(By.XPATH, "*//input[@id = 'username']").send_keys(email)
     time.sleep(await getrandomNumber(2,6))
     driver.find_element(By.XPATH, "*//input[@id = 'password']").send_keys(password)
     driver.find_element(By.XPATH, "*//button[@aria-label= 'Sign in']").click()
+    textVerifycaptcha = "no"
+    try:
+        time.sleep(await getrandomNumber(8,12))
+        isCaptch = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "*//h1")))
+        if 'security' in isCaptch.text:
+            textVerifycaptcha = "yes"
+            print("<<<<<<<- capctha issue  ->>>>>>>")
+            return False
+    except:
+        print("<<<<<<<- capctha issue  ->>>>>>>")
+        return False
     print("<<<<<<<- login into account succes   ->>>>>>>")
     return True
     
@@ -165,7 +185,7 @@ async def getCookies(driver):
     return cookies
 
 async def slow_type(element, text):
-    delay = 0  # 5 characters per word
+    delay = 60/300 # 5 characters per word
     for character in text:
         element.send_keys(character)
         time.sleep(delay)
@@ -203,10 +223,11 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
                 profileImage = soup.find('div', {'class': 'presence-entity presence-entity--size-3'}).find('img')['src']
                 UserTitle = soup.find('div', {'class': 'entity-result__primary-subtitle t-14 t-black t-normal'}).text.strip()
                 adress = soup.find('div', {'class': 'entity-result__secondary-subtitle t-14 t-normal'}).text.strip()
+                send_msg = send_msg_content.replace("{first_name}", firstname).replace("{last_name}", lastname)
+               
                 if send_message_flag:
-                    send_msg_content= send_msg_content.replace("{first_name}", firstname).replace("{last_name}", lastname)
                     try:
-                        await send_message(result, send_msg_content)
+                        await send_message(result, send_msg)
                         SendMessageCount += 1
                         isMessage = "Message Sent!"
                     except:
@@ -217,18 +238,18 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
                         LikeCount +=1
                     time.sleep(await getrandomNumber(1, 3))
                 if send_connection_request_flag:
-                    send_connection_msg = send_connection_msg.replace("{first_name}", firstname).replace("{last_name}", lastname)
+                    send_updated_message = send_connection_msg.replace("{first_name}", firstname).replace("{last_name}", lastname)
                     try: 
                         WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Connect']"))).click()
                         time.sleep(await getrandomNumber(1, 3))
                         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Add a note']"))).click()
                         element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']")))
-                        await slow_type(element, send_connection_msg)
+                        await slow_type(element,send_updated_message)
                         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
                         isconnected = "Connection Request Sent!"
                         ConnectionSentCount += 1
                     except:
-                        isconnected = await sendConnectionRequest(profileLink, send_connection_msg, driver)
+                        isconnected = await sendConnectionRequest(profileLink,send_updated_message, driver)
                         if isconnected == "Connection Request Sent!":
                             ConnectionSentCount += 1
                 
@@ -245,8 +266,8 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
                 else:
                     fetchedresults.update_one({'campaign_id': campaignid}, {'$push': {'results': dataDict}})
                 # campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'running'}})
-                campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i,'connected_people': ConnectionSentCount, 'message_send': SendMessageCount, 'liked': LikeCount}})
-                
+                campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i+1,'connected_people': ConnectionSentCount, 'message_send': SendMessageCount, 'liked': LikeCount}})
+                time.sleep(await getrandomNumber(1, 3))
                 if i == int(resultnum):
                     print("<<<<<< done success campagin >>>>>>> ")
                     isDoneflag = True
@@ -287,6 +308,7 @@ async def sendInMail(driver, subject, message):
     await slow_type(element, message)
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//button[normalize-space()='Send']"))).click()
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//button[@data-control-name='overlay.close_overlay']"))).click()
+    print("<<<<<< inmail sent success >>>>>>> ")
     return True
 
 async def search_sales(driver,url, result_num, subject, message, campaigns, fetchedresults, campaignid):
@@ -398,7 +420,7 @@ async def sendConnectionRequest(link, message, driver):
         time.sleep(await getrandomNumber(1,3))
         element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']")))
         await slow_type(element, message)
-        time.sleep(await getrandomNumber(2,6))
+        time.sleep(await getrandomNumber(3,6))
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
         driver.close()
         driver.switch_to.window(original_window)
@@ -412,7 +434,7 @@ async def sendConnectionRequest(link, message, driver):
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Add a note']"))).click()
             element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']")))
             await slow_type(element, message)
-            time.sleep(await getrandomNumber(2,4))
+            time.sleep(await getrandomNumber(3,4))
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
             driver.close()
             driver.switch_to.window(original_window)

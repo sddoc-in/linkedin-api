@@ -14,7 +14,8 @@ import asyncio
 from linkedin import openBrowser, openBrowserUserCookies, LinekdinLogin, getverificationCodeStatus, verifyCode, getCookies, get_expiry_time, sendConnectionRequest, openExistingUser , startcampaign
 
 uri = "mongodb+srv://admin:BTzG4AjRskOaeFeb@leads.nhrq5wp.mongodb.net?retryWrites=true&w=majority"
-client = MongoClient(uri, server_api=ServerApi('1'))
+client = MongoClient(uri, server_api=ServerApi('1'), tls=True, tlsAllowInvalidCertificates=True)
+
 db = client.client
 campaigns = db.campaigns
 fetchedresults = db['fetched-results']
@@ -64,7 +65,9 @@ async def get_driver(proxy_address: str = Query(...),
     proxy_password: str = Query(...), session_id: str =Query(default_factory=lambda: str(uuid.uuid4()))):
     # print(proxy_address, proxy_port, proxy_username, proxy_password , "hey")
     if session_id not in driver_pool:
-        driver_pool[session_id] = await openBrowser(proxy_address, proxy_port, proxy_username, proxy_password)  
+        print("Creating new driver   ", session_id)
+        driver_pool[session_id] = await openBrowser(proxy_address, proxy_port, proxy_username, proxy_password) 
+
 
     # Return the existing or newly created driver for the session ID
     return driver_pool[session_id] , session_id
@@ -102,16 +105,18 @@ async def login(email: str = Query(...), password: str = Query(...), driver_sess
     driver, session_id = driver_session
     email = unquote(email)
     password = unquote(password)
-    await LinekdinLogin(email, password, driver)
+    isCaptcha = await LinekdinLogin(email, password, driver)
+    if isCaptcha == False:
+        await closeUserBrowser(session_id, driver)
+        return JSONResponse(content={"message": "Login Reject due to captcha", "session":session_id})
     cookies = await getCookies(driver)
     codeFlag = await getverificationCodeStatus(driver)
     message = "Login Successful!"
     if codeFlag:
         message = "Verification Code Required!"
         return JSONResponse(content={"message": message, "session":session_id, "cookies": "not found", 'codeFlag': codeFlag})
-    closeUserBrowser(session_id, driver)
+    await closeUserBrowser(session_id, driver)
     # expiry_time = await get_expiry_time(cookies)
-    await closeBrowser(session_id, driver)
     return JSONResponse(content={"message": message, "session":session_id, "cookies": cookies,'codeFlag': codeFlag})
 
 @app.get("/getcodestatus")

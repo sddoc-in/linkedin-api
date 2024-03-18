@@ -266,7 +266,7 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
                 else:
                     fetchedresults.update_one({'campaign_id': campaignid}, {'$push': {'results': dataDict}})
                 # campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'running'}})
-                campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i+1,'connected_people': ConnectionSentCount, 'message_send': SendMessageCount, 'liked': LikeCount}})
+                campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i,'connected_people': ConnectionSentCount, 'message_send': SendMessageCount, 'liked': LikeCount}})
                 time.sleep(await getrandomNumber(1, 3))
                 if i == int(resultnum):
                     print("<<<<<< done success campagin >>>>>>> ")

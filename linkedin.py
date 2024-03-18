@@ -206,7 +206,7 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
                 if send_message_flag:
                     send_msg_content= send_msg_content.replace("{first_name}", firstname).replace("{last_name}", lastname)
                     try:
-                        send_message(result, send_msg_content)
+                        await send_message(result, send_msg_content)
                         SendMessageCount += 1
                         isMessage = "Message Sent!"
                     except:

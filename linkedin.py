@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time , random    
 from bs4 import BeautifulSoup
-
+import asyncio
 
 async def openBrowser(proxy_address, proxy_port, proxy_username, proxy_password ):
     
@@ -124,13 +124,24 @@ async def startcampaign(campaigns, camapignData, driver, campaignid, fetchedresu
         send_connection_msg=""
         send_inmail_msg=""
         resultNum = url["filter"]
+        typeUrl = url['type']
+
+        sales_send_inmail_msg = ""
+        sales_send_connection_request_msg = ""
+        sales_send_connection_request_flag = False
+        sales_send_inmail_flag = False
+        inmail_subject = ""
         # print(link, resultNum)
-        if 'sales' in url:
+        if typeUrl == "navigator_list_url":
             for step in steps:
-                send_inmail_flag = True
-                inmail_subject = step["subject"]
-                inmail_message = step["msg"]
-            data = await search_sales(driver, link, resultNum, inmail_subject, inmail_message, campaigns, fetchedresults, campaignid)
+                if step["key"] == "send_inmail":
+                    sales_send_inmail_flag = True
+                    sales_send_inmail_msg = step["msg"]
+                    inmail_subject = step["subject"]
+                if step["key"] == "send_connection_request":
+                    sales_send_connection_request_flag = True
+                    sales_send_connection_request_msg = step["msg"]
+            data = await search_sales(driver, link, resultNum, inmail_subject, sales_send_inmail_msg, sales_send_connection_request_msg, campaigns, fetchedresults, campaignid,sales_send_connection_request_flag, sales_send_inmail_flag)
             dataarray.extend(data)
         for step in steps:
             # print(step)
@@ -186,10 +197,10 @@ async def getCookies(driver):
     return cookies
 
 async def slow_type(element, text):
-    delay = 60/300 # 5 characters per word
+    delay = 120/(300*5)
     for character in text:
         element.send_keys(character)
-        time.sleep(delay)
+        await asyncio.sleep(delay)
         
 async def send_message(result,message):
     WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, "//button[normalize-space()='Message']"))).click()
@@ -312,15 +323,34 @@ async def sendInMail(driver, subject, message):
     print("<<<<<< inmail sent success >>>>>>> ")
     return True
 
-async def search_sales(driver,url, result_num, subject, message, campaigns, fetchedresults, campaignid):
+async def sendConnectSales(result, message, driver):
+    if message == "":
+        WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, ".//button[starts-with(@aria-label, 'See more actions for')]//span[1]"))).click()
+        WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, "//button[normalize-space()='Connect']"))).click()
+        print("<<<<<<<- message is empty  ->>>>>>>")
+        await asyncio.sleep(await getrandomNumber(3, 8))
+        return True
+    else:
+        WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, ".//button[starts-with(@aria-label, 'See more actions for')]//span[1]"))).click()
+        time.sleep(await getrandomNumber(1, 3))
+        WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, "//button[normalize-space()='Connect']"))).click()
+        element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea")))
+        await slow_type(element, message)
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "//button[normalize-space()='Send Invitation']"))).click()
+        await asyncio.sleep(await getrandomNumber(3, 8))
+        return True
+
+async def search_sales(driver,url, result_num, subject, send_inmail_msg, send_connection_msg ,campaigns, fetchedresults, campaignid, send_connection_request_flag, send_inmail_flag):
     driver.get(url)
     DataList = []
     i = 0
     immail_sent = 0
+    send_connect_num = 0
     loopflag = False
     while True:
         findResultList = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, "*//li[@class='artdeco-list__item pl3 pv3 ']")))
         for result in findResultList:
+            inmail = False
             driver.execute_script("arguments[0].scrollIntoView();", result)
             result_html = result.get_attribute('outerHTML')
             soup = BeautifulSoup(result_html, 'html.parser')
@@ -341,11 +371,18 @@ async def search_sales(driver,url, result_num, subject, message, campaigns, fetc
                     'type': 'salesnavigator'
                 }
                 WebDriverWait(result, 10).until(EC.presence_of_element_located((By.XPATH, ".//li[@class='message-overlay-trigger']"))).click()
-                try:
-                    message = message.replace("{first_name}", firstname).replace("{last_name}", lastname)
-                    is_inmail = await sendInMail(driver, subject, message)
-                except:
-                    is_inmail = False
+                inmail_message = send_inmail_msg.replace("{first_name}", firstname).replace("{last_name}", lastname)
+                send_message = send_connection_msg.replace("{first_name}", firstname).replace("{last_name}", lastname)
+                if send_connection_request_flag:
+                    isconnect = await sendConnectSales(result, send_message, driver)
+                    if isconnect:
+                        send_connect_num += 1
+                    data['connect'] = isconnect
+                if send_inmail_flag:
+                    try:
+                        is_inmail = await sendInMail(driver, subject, inmail_message)
+                    except:
+                        is_inmail = False
                 data['inmail'] = is_inmail
                 if is_inmail:
                     print("<<<<<< inmail sent success >>>>>>> ")
@@ -360,7 +397,7 @@ async def search_sales(driver,url, result_num, subject, message, campaigns, fetc
                 else:
                     fetchedresults.update_one({'campaign_id': campaignid}, {'$push': {'results': data}})
                 # campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'running'}})
-                campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i, 'connected_people': 'notused', 'message_send': 'notused', 'liked': 'notused', 'inmail_sent': immail_sent}})
+                campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i, 'connected_people': send_connect_num, 'message_send': 'notused', 'liked': 'notused', 'inmail_sent': immail_sent}})
                 # DataList.append(data)
                 if i >= result_num:
                     loopflag = True

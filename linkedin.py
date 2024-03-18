@@ -182,7 +182,9 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
     dataList = []
     driver.get(url)
     isDoneflag = False
-
+    ConnectionSentCount = 0
+    SendMessageCount =0
+    LikeCount = 0
     # for i in range(1, int(resultnum)):
     i = 0
     while True:
@@ -205,11 +207,14 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
                     send_msg_content= send_msg_content.replace("{first_name}", firstname).replace("{last_name}", lastname)
                     try:
                         send_message(result, send_msg_content)
+                        SendMessageCount += 1
                         isMessage = "Message Sent!"
                     except:
                         isMessage = "Message Not Sent!"
                 if like:
                     isLike = await likePost(driver, profileLink)
+                    if isLike:
+                        LikeCount +=1
                     time.sleep(await getrandomNumber(1, 3))
                 if send_connection_request_flag:
                     send_connection_msg = send_connection_msg.replace("{first_name}", firstname).replace("{last_name}", lastname)
@@ -220,8 +225,12 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
                         element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//textarea[@id='custom-message']")))
                         await slow_type(element, send_connection_msg)
                         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
+                        isconnected = "Connection Request Sent!"
+                        ConnectionSentCount += 1
                     except:
                         isconnected = await sendConnectionRequest(profileLink, send_connection_msg, driver)
+                        if isconnected == "Connection Request Sent!":
+                            ConnectionSentCount += 1
                 
                 # company_name, profileLink = await getCompanyName(driver, profileLink)
                 # dataDict = [{'FirstName': firstname, 'LastName': lastname , 'profileLink': profileLink,'profileimage' : profileImage , 'UserTitle': UserTitle, 'adress': adress , 'isconnected': isconnected['message'], 'isMessage': isMessage , 'isLike': isLike}]
@@ -236,7 +245,7 @@ async def getPageDataConnection(driver, url, resultnum,send_msg_content , send_c
                 else:
                     fetchedresults.update_one({'campaign_id': campaignid}, {'$push': {'results': dataDict}})
                 # campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'running'}})
-                campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i}})
+                campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i,'connected_people': ConnectionSentCount, 'message_send': SendMessageCount, 'liked': LikeCount}})
                 
                 if i == int(resultnum):
                     print("<<<<<< done success campagin >>>>>>> ")
@@ -284,6 +293,7 @@ async def search_sales(driver,url, result_num, subject, message, campaigns, fetc
     driver.get(url)
     DataList = []
     i = 0
+    immail_sent = 0
     loopflag = False
     while True:
         findResultList = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, "*//li[@class='artdeco-list__item pl3 pv3 ']")))
@@ -314,17 +324,20 @@ async def search_sales(driver,url, result_num, subject, message, campaigns, fetc
                 except:
                     is_inmail = False
                 data['inmail'] = is_inmail
+                if is_inmail:
+                    print("<<<<<< inmail sent success >>>>>>> ")
+                    immail_sent += 1
                 if i == 0:
                     if fetchedresults.find_one({'campaign_id': campaignid}) == None:
                         result = {'campaign_id': campaignid,'type': 'salesnavigator' ,'results': [data] }
                         fetchedresults.insert_one(result)
                     
-                    result = {'campaign_id': campaignid,'type': 'salesnavigator' ,'results': data , }
+                    result = {'campaign_id': campaignid,'type': 'salesnavigator' ,'results': data }
                     fetchedresults.update_one(result)
                 else:
                     fetchedresults.update_one({'campaign_id': campaignid}, {'$push': {'results': data}})
                 # campaigns.update_one({'campaign_id': campaignid}, {'$set': {'status': 'running'}})
-                campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i}})
+                campaigns.update_one({'campaign_id': campaignid}, {'$set': {'progress': i, 'connected_people': 'notused', 'message_send': 'notused', 'liked': 'notused', 'inmail_sent': immail_sent}})
                 # DataList.append(data)
                 if i >= result_num:
                     loopflag = True
@@ -358,6 +371,7 @@ async def likePost(driver, profile_url):
             time.sleep(await getrandomNumber(2, 5))
             i+=1
             if i > 3:
+                print("<<<<<< like post success >>>>>>> ")
                 isLiked = True
                 break
     except:
@@ -388,6 +402,7 @@ async def sendConnectionRequest(link, message, driver):
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
         driver.close()
         driver.switch_to.window(original_window)
+        print("<<<<<<<<<< 1st try Connection Request Sent! >>>>>>>>>")
         return "Connection Request Sent!"
     except:
         try:
@@ -401,6 +416,7 @@ async def sendConnectionRequest(link, message, driver):
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//button[normalize-space()='Send']"))).click()
             driver.close()
             driver.switch_to.window(original_window)
+            print("<<<<<<<<<< second try  Connection Request Sent! >>>>>>>>>")
             return "Connection Request Sent!"
         except :
             driver.close()

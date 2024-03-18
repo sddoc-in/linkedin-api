@@ -152,7 +152,8 @@ async def startcampaign(campaigns, camapignData, driver, campaignid, fetchedresu
 async def getverificationCodeStatus(driver):
     codeFlag = False
     try :
-        h1 = driver.find_element(By.XPATH, "*//h1[@class = 'content__header']").text
+        h1 = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "*//h1[@class = 'content__header']"))).text
+        # = driver.find_element(By.XPATH, "*//h1[@class = 'content__header']").text
         if "verification" in h1:
             codeFlag = True        
     except Exception as e :

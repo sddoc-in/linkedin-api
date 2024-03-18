@@ -24,6 +24,8 @@ app = FastAPI()
 origins = [
     "https://leads.sddoc.in",
     "https://leads.sddoc.in/",
+    "http://v3.newson.io",
+    "http://v3.newson.io/",
     "http://localhost:3000",
     "http://localhost:3000/",
 ]

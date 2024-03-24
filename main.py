@@ -132,10 +132,10 @@ async def verifcode(code: str = Query(...), session_id: str = Query(...), driver
     if codestatuse:
         cookies = await getCookies(driver)
         expiry_time = await get_expiry_time(cookies)
-        closeUserBrowser(session_id, driver)
-        return JSONResponse(content={"message": "Code Verified!", "cookies": cookies , "session":session_id, "expire": expiry_time})
+        await closeUserBrowser(session_id, driver)
+        return JSONResponse(content={"message": True, "cookies": cookies , "session":session_id, "expire": expiry_time})
     else:
-        return JSONResponse(content={"message": "Code Not Verified!"})
+        return JSONResponse(content={"message": False})
 
 # @app.get("/search")
 # async def search(serachname: str = Query(...), titlekeyword: str = Query(...), location: str = Query(...), connectiontype: List[str] = Query(...), company: str = Query(...), session_id: str = Query(...),driver = Depends(get_session_driver)):

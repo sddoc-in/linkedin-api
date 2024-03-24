@@ -168,7 +168,7 @@ async def getverificationCodeStatus(driver):
         if "verification" in h1:
             codeFlag = True        
     except Exception as e :
-        print("<<<<<<<- exception    ->>>>>>>", e )
+        print("<<<<<<<- code ->  exception    ->>>>>>>", e )
         codeFlag = False
     return codeFlag
 

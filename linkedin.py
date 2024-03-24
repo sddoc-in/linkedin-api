@@ -91,17 +91,17 @@ async def LinekdinLogin(email, password, driver):
     time.sleep(await getrandomNumber(2,6))
     driver.find_element(By.XPATH, "*//input[@id = 'password']").send_keys(password)
     driver.find_element(By.XPATH, "*//button[@aria-label= 'Sign in']").click()
-    textVerifycaptcha = "no"
-    try:
-        time.sleep(await getrandomNumber(8,12))
-        isCaptch = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "*//h1")))
-        if 'security' in isCaptch.text:
-            textVerifycaptcha = "yes"
-            print("<<<<<<<- capctha issue  ->>>>>>>")
-            return False
-    except:
-        print("<<<<<<<- capctha issue  ->>>>>>>")
-        return False
+    # textVerifycaptcha = "no"
+    # try:
+    #     time.sleep(await getrandomNumber(8,12))
+    #     isCaptch = WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "*//h1")))
+    #     if 'security' in isCaptch.text:
+    #         textVerifycaptcha = "yes"
+    #         print("<<<<<<<- capctha issue  ->>>>>>>")
+    #         return False
+    # except:
+    #     print("<<<<<<<- capctha issue  ->>>>>>>")
+    #     return False
     print("<<<<<<<- login into account succes   ->>>>>>>")
     return True
     
